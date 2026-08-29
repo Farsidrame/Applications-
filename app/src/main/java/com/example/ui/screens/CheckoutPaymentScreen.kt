@@ -1,0 +1,430 @@
+package com.example.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.LocalPharmacy
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.local.InitialData
+import com.example.data.model.OrderEntity
+import com.example.data.model.PaymentMethod
+import com.example.ui.components.PaymentMethodSelector
+import com.example.ui.theme.EscrowGreenColor
+import com.example.ui.theme.MedicalEmeraldAccent
+import com.example.ui.theme.MedicalTealDark
+import com.example.ui.theme.MedicalTealLight
+import com.example.ui.theme.MedicalTealPrimary
+import com.example.ui.theme.TextPrimaryDark
+import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.VerifiedBadgeGreen
+import com.example.ui.viewmodel.PaymentProcessState
+import com.example.ui.viewmodel.PharmaViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CheckoutPaymentScreen(
+    viewModel: PharmaViewModel,
+    onBack: () -> Unit,
+    onPaymentSuccess: (OrderEntity) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
+    val paymentState by viewModel.paymentState.collectAsStateWithLifecycle()
+    val userAddress by viewModel.userDeliveryAddress.collectAsStateWithLifecycle()
+    val userName by viewModel.userName.collectAsStateWithLifecycle()
+    val userPhone by viewModel.userPhone.collectAsStateWithLifecycle()
+
+    var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.ORANGE_MONEY) }
+    var mobileOrCardNumber by remember { mutableStateOf("+221 77 654 32 10") }
+    var otpPinCode by remember { mutableStateOf("4821") }
+
+    val defaultPharmacy = InitialData.pharmacies.first()
+    val subtotal = cartItems.sumOf { it.priceFcfa * it.quantity }
+    val deliveryFee = defaultPharmacy.deliveryFeeFcfa
+    val total = subtotal + deliveryFee
+
+    // Payment Processing Modal
+    if (paymentState is PaymentProcessState.Processing) {
+        val state = paymentState as PaymentProcessState.Processing
+        Dialog(onDismissRequest = { /* non-dismissible during payment */ }) {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .testTag("payment_processing_dialog")
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(
+                        color = MedicalTealPrimary,
+                        strokeWidth = 4.dp,
+                        modifier = Modifier.size(52.dp)
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "Sécurisation du Paiement",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimaryDark
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = state.stepMessage,
+                        fontSize = 12.sp,
+                        color = TextSecondaryMuted,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFFE8F5E9))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(Icons.Default.Lock, contentDescription = null, tint = VerifiedBadgeGreen, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Protocole bancaire SSL 256-bit crypté", fontSize = 10.sp, color = VerifiedBadgeGreen, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        modifier = modifier
+            .fillMaxSize()
+            .testTag("checkout_payment_screen"),
+        topBar = {
+            TopAppBar(
+                title = { Text("Paiement Sécurisé en Ligne", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = TextPrimaryDark
+                )
+            )
+        },
+        bottomBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                tonalElevation = 8.dp,
+                shadowElevation = 8.dp,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Montant net débité:", fontSize = 11.sp, color = TextSecondaryMuted)
+                            Text(
+                                text = "$total FCFA",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MedicalTealPrimary
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                viewModel.processOnlinePayment(
+                                    items = cartItems,
+                                    pharmacy = defaultPharmacy,
+                                    deliveryAddress = userAddress,
+                                    patientName = userName,
+                                    patientPhone = userPhone,
+                                    paymentMethod = selectedPaymentMethod,
+                                    mobileNumberOrCard = mobileOrCardNumber,
+                                    onSuccess = { newOrder ->
+                                        onPaymentSuccess(newOrder)
+                                    }
+                                )
+                            },
+                            modifier = Modifier
+                                .height(50.dp)
+                                .testTag("confirm_and_pay_button"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
+                            enabled = cartItems.isNotEmpty() && paymentState !is PaymentProcessState.Processing
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Confirmer & Payer",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            // Order Recap Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Récapitulatif de la commande",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimaryDark
+                        )
+                        Text(
+                            text = "${cartItems.size} article(s)",
+                            fontSize = 12.sp,
+                            color = TextSecondaryMuted
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    cartItems.forEach { item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "${item.medicineName} x${item.quantity}",
+                                fontSize = 12.sp,
+                                color = TextPrimaryDark,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "${item.priceFcfa * item.quantity} FCFA",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MedicalTealDark
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    HorizontalDivider(color = Color(0xFFEFF4F2))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Pharmacie : ${defaultPharmacy.name}", fontSize = 11.sp, color = TextSecondaryMuted)
+                        Text("Frais livraison : $deliveryFee FCFA", fontSize = 11.sp, color = TextSecondaryMuted)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Delivery Details Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Destination & Destinataire",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimaryDark
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(userAddress, fontSize = 12.sp, color = TextSecondaryMuted)
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Phone, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("$userName • $userPhone", fontSize = 12.sp, color = TextSecondaryMuted)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Payment Methods Header & Selector
+            Text(
+                text = "Choisissez votre moyen de paiement en ligne",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimaryDark
+            )
+            Text(
+                text = "Paiement direct sans vous déplacer avec accusé de réception",
+                fontSize = 12.sp,
+                color = TextSecondaryMuted
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            PaymentMethodSelector(
+                selectedMethod = selectedPaymentMethod,
+                onMethodSelected = { selectedPaymentMethod = it }
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Payment Input Box (Mobile Money Phone Number / Card Details)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = when (selectedPaymentMethod) {
+                            PaymentMethod.ORANGE_MONEY -> "Numéro Orange Money du compte à débiter"
+                            PaymentMethod.WAVE -> "Numéro Wave pour notification de paiement"
+                            PaymentMethod.MTN_MOMO -> "Numéro MTN Mobile Money"
+                            PaymentMethod.CREDIT_CARD -> "Numéro de Carte Bancaire (16 chiffres)"
+                            PaymentMethod.ESCROW_WALLET -> "Compte de Séquestre Santé Sécurisé"
+                        },
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimaryDark
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = mobileOrCardNumber,
+                        onValueChange = { mobileOrCardNumber = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("payment_account_input"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MedicalTealPrimary),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (selectedPaymentMethod == PaymentMethod.CREDIT_CARD) Icons.Default.CreditCard else Icons.Default.Phone,
+                                contentDescription = null,
+                                tint = MedicalTealPrimary
+                            )
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Reassurance Escrow info
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFF1F8F6))
+                            .padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VerifiedUser,
+                            contentDescription = null,
+                            tint = MedicalTealPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Protection client : Un code PIN secret vous est remis pour déverrouiller la remise du colis par le livreur.",
+                            fontSize = 11.sp,
+                            color = MedicalTealDark
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+        }
+    }
+}

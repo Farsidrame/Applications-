@@ -1,0 +1,6 @@
+{
+  "name": "PharmaDirect",
+  "description": "Application de commande et paiement en ligne sécurisé de médicaments auprès des pharmacies certifiées avec livraison express à domicile",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
