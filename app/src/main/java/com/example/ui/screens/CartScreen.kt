@@ -106,8 +106,18 @@ fun CartScreen(
         PrescriptionUploadDialog(
             initialPatientName = viewModel.userName.value,
             onDismiss = { showPrescriptionDialog = false },
-            onSubmit = { pName, dName, date, uri, notes, meds ->
-                viewModel.submitPrescription(pName, dName, date, uri, notes, meds)
+            onSubmit = { pName, dName, date, uri, notes, meds, pharmId, pharmName, pharmRegion ->
+                viewModel.submitPrescription(
+                    patientName = pName,
+                    doctorName = dName,
+                    prescriptionDate = date,
+                    photoUri = uri,
+                    notes = notes,
+                    recognizedMedicines = meds,
+                    pharmacyId = pharmId,
+                    pharmacyName = pharmName,
+                    pharmacyRegion = pharmRegion
+                )
             }
         )
     }

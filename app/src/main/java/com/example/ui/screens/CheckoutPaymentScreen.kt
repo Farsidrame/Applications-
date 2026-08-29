@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.InitialData
+import com.example.data.model.CartItemEntity
 import com.example.data.model.OrderEntity
 import com.example.data.model.PaymentMethod
 import com.example.ui.components.PaymentMethodSelector
@@ -90,7 +91,7 @@ fun CheckoutPaymentScreen(
     val userName by viewModel.userName.collectAsStateWithLifecycle()
     val userPhone by viewModel.userPhone.collectAsStateWithLifecycle()
 
-    var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.ORANGE_MONEY) }
+    var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.WAVE) }
     var mobileOrCardNumber by remember { mutableStateOf("+221 77 654 32 10") }
     var otpPinCode by remember { mutableStateOf("4821") }
 

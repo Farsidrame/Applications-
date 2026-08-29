@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.Medication
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Badge
@@ -45,6 +46,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.local.PharmaDatabase
+import com.example.data.model.CartItemEntity
 import com.example.data.model.Medicine
 import com.example.data.model.OrderEntity
 import com.example.data.model.Pharmacy
@@ -59,6 +61,7 @@ import com.example.ui.screens.OrdersHistoryScreen
 import com.example.ui.screens.PharmacistAdviceScreen
 import com.example.ui.screens.PharmacyDetailScreen
 import com.example.ui.screens.PrescriptionsScreen
+import com.example.ui.screens.ProfileScreen
 import com.example.ui.theme.MedicalEmeraldAccent
 import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.MedicalTealLight
@@ -72,6 +75,7 @@ enum class Screen(val title: String, val icon: ImageVector, val tag: String) {
     PRESCRIPTIONS("Ordonnances", Icons.Default.Description, "nav_prescriptions"),
     CART("Panier", Icons.Default.ShoppingCart, "nav_cart"),
     ORDERS("Commandes", Icons.Default.ReceiptLong, "nav_orders"),
+    PROFILE("Profil", Icons.Default.Person, "nav_profile"),
     ADVICE("Conseil", Icons.Default.Chat, "nav_advice"),
     MEDICINE_DETAIL("Détail", Icons.Default.Medication, "nav_detail"),
     PHARMACY_DETAIL("Pharmacie", Icons.Default.LocalPharmacy, "nav_pharmacy_detail"),
@@ -109,7 +113,7 @@ fun PharmaApp(viewModel: PharmaViewModel) {
         Screen.PRESCRIPTIONS,
         Screen.CART,
         Screen.ORDERS,
-        Screen.ADVICE
+        Screen.PROFILE
     )
 
     val showBottomBar = currentScreen in bottomNavScreens
@@ -178,6 +182,12 @@ fun PharmaApp(viewModel: PharmaViewModel) {
                         onNavigateToCatalog = { currentScreen = Screen.CATALOG },
                         onNavigateToPrescriptions = { currentScreen = Screen.PRESCRIPTIONS },
                         onNavigateToCart = { currentScreen = Screen.CART },
+                        onNavigateToProfile = { currentScreen = Screen.PROFILE },
+                        onNavigateToAdvice = { currentScreen = Screen.ADVICE },
+                        onNavigateToTracking = { order ->
+                            trackingOrder = order
+                            currentScreen = Screen.TRACKING
+                        },
                         onMedicineClick = { medicine ->
                             selectedMedicine = medicine
                             currentScreen = Screen.MEDICINE_DETAIL
@@ -216,8 +226,12 @@ fun PharmaApp(viewModel: PharmaViewModel) {
                         onSelectOrder = { order ->
                             trackingOrder = order
                             currentScreen = Screen.TRACKING
-                        }
+                        },
+                        onNavigateToCart = { currentScreen = Screen.CART },
+                        onNavigateToCatalog = { currentScreen = Screen.CATALOG }
                     )
+
+                    Screen.PROFILE -> ProfileScreen(viewModel = viewModel)
 
                     Screen.ADVICE -> PharmacistAdviceScreen(viewModel = viewModel)
 

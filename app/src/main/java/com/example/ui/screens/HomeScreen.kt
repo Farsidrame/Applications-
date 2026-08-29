@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Nightlight
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
@@ -44,6 +45,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -67,6 +69,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.R
 import com.example.data.model.Medicine
+import com.example.data.model.OrderEntity
+import com.example.data.model.OrderStatus
 import com.example.data.model.Pharmacy
 import com.example.ui.components.CertifiedBadge
 import com.example.ui.components.DutyBadge
@@ -91,6 +95,9 @@ fun HomeScreen(
     onNavigateToCatalog: () -> Unit,
     onNavigateToPrescriptions: () -> Unit,
     onNavigateToCart: () -> Unit,
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToAdvice: () -> Unit = {},
+    onNavigateToTracking: (OrderEntity) -> Unit = {},
     onMedicineClick: (Medicine) -> Unit,
     onPharmacyClick: (Pharmacy) -> Unit,
     modifier: Modifier = Modifier
@@ -100,6 +107,14 @@ fun HomeScreen(
     val filteredPharmacies by viewModel.filteredPharmacies.collectAsStateWithLifecycle()
     val dutyOnly by viewModel.dutyOnlyFilter.collectAsStateWithLifecycle()
     val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
+    val currentDeliveryAddress by viewModel.userDeliveryAddress.collectAsStateWithLifecycle()
+    val currentUserName by viewModel.userName.collectAsStateWithLifecycle()
+    val orders by viewModel.orders.collectAsStateWithLifecycle()
+    val telemetry by viewModel.liveTelemetry.collectAsStateWithLifecycle()
+
+    val activeOrder = orders.firstOrNull {
+        it.status != OrderStatus.DELIVERED.name && it.status != OrderStatus.CANCELLED.name
+    }
 
     LazyColumn(
         modifier = modifier
@@ -114,56 +129,153 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MedicalTealPrimary)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onNavigateToProfile() }
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = "Localisation",
                             tint = Color.White,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "LIVRAISON À DOMICILE",
-                                color = Color.White.copy(alpha = 0.8f),
+                                text = "LIVRAISON POUR ${currentUserName.uppercase()}",
+                                color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Dakar, Plateau & Banlieue",
+                                text = currentDeliveryAddress,
                                 color = Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
 
-                    Box(
+                    IconButton(
+                        onClick = onNavigateToProfile,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color.White.copy(alpha = 0.2f))
-                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                            .size(36.dp)
+                            .testTag("btn_home_profile")
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Shield,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Mon Profil & Adresses",
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
+        }
+
+        // Live Order Delivery Tracker Card (if active order exists)
+        if (activeOrder != null) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+                        .clickable { onNavigateToTracking(activeOrder) }
+                        .testTag("home_live_order_banner"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF00332C)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(VerifiedBadgeGreen),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.LocalShipping,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "LIVRAISON EN COURS",
+                                            color = Color(0xFF00E676),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF00E676))
+                                        )
+                                    }
+                                    Text(
+                                        text = activeOrder.pharmacyName,
+                                        color = Color.White,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            Button(
+                                onClick = { onNavigateToTracking(activeOrder) },
+                                colors = ButtonDefaults.buttonColors(containerColor = VerifiedBadgeGreen),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("Suivre", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = "100% Fiable & Certifié",
-                                color = Color.White,
+                                text = "Livreur: ${telemetry.courierName} • ${telemetry.currentStreet}",
+                                color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
+                                maxLines = 1,
+                                modifier = Modifier.weight(1f)
+                            )
+                            val mins = telemetry.etaSeconds / 60
+                            Text(
+                                text = if (telemetry.etaSeconds > 0) "~$mins min" else "Arrivé",
+                                color = Color(0xFFFFD54F),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.ExtraBold
                             )
                         }
                     }
@@ -287,14 +399,14 @@ fun HomeScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Commander par Ordonnance",
+                            text = "Scanner l'Ordonnance",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = SafeBlueSecondary,
                             lineHeight = 16.sp
                         )
                         Text(
-                            text = "Photo & Validation",
+                            text = "Envoyer à la pharmacie",
                             fontSize = 11.sp,
                             color = TextSecondaryMuted
                         )

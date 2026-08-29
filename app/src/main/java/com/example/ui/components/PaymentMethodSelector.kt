@@ -62,25 +62,25 @@ fun PaymentMethodSelector(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         PaymentMethodOption(
+            method = PaymentMethod.WAVE,
+            title = "Wave Mobile Money",
+            subtitle = "Paiement direct instantané sans frais (0%) • Validation par notification ou QR Code",
+            badge = "Recommandé • 0% Frais",
+            badgeColor = WaveBlueColor,
+            iconColor = WaveBlueColor,
+            isSelected = selectedMethod == PaymentMethod.WAVE,
+            onSelect = { onMethodSelected(PaymentMethod.WAVE) }
+        )
+
+        PaymentMethodOption(
             method = PaymentMethod.ORANGE_MONEY,
             title = "Orange Money",
-            subtitle = "Paiement direct sans déplacement • Frais 0%",
+            subtitle = "Paiement direct sécurisé • Validation code secret / USSD #144#",
             badge = "Instantané",
             badgeColor = OrangeMoneyColor,
             iconColor = OrangeMoneyColor,
             isSelected = selectedMethod == PaymentMethod.ORANGE_MONEY,
             onSelect = { onMethodSelected(PaymentMethod.ORANGE_MONEY) }
-        )
-
-        PaymentMethodOption(
-            method = PaymentMethod.WAVE,
-            title = "Wave Mobile Money",
-            subtitle = "Validation rapide par notification 1%",
-            badge = "Populaire",
-            badgeColor = WaveBlueColor,
-            iconColor = WaveBlueColor,
-            isSelected = selectedMethod == PaymentMethod.WAVE,
-            onSelect = { onMethodSelected(PaymentMethod.WAVE) }
         )
 
         PaymentMethodOption(

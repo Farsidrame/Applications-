@@ -5,18 +5,22 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.data.model.CartItemEntity
+import com.example.data.model.DeliveryAddressEntity
 import com.example.data.model.OrderEntity
 import com.example.data.model.PrescriptionEntity
 import com.example.data.model.ReminderEntity
+import com.example.data.model.UserProfileEntity
 
 @Database(
     entities = [
         CartItemEntity::class,
         OrderEntity::class,
         PrescriptionEntity::class,
-        ReminderEntity::class
+        ReminderEntity::class,
+        UserProfileEntity::class,
+        DeliveryAddressEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class PharmaDatabase : RoomDatabase() {

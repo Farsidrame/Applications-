@@ -3,6 +3,7 @@ package com.example.data.repository
 import com.example.data.local.InitialData
 import com.example.data.local.PharmaDao
 import com.example.data.model.CartItemEntity
+import com.example.data.model.DeliveryAddressEntity
 import com.example.data.model.Medicine
 import com.example.data.model.OrderEntity
 import com.example.data.model.OrderStatus
@@ -10,7 +11,9 @@ import com.example.data.model.PaymentMethod
 import com.example.data.model.Pharmacy
 import com.example.data.model.PrescriptionEntity
 import com.example.data.model.ReminderEntity
+import com.example.data.model.UserProfileEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOf
 import java.util.UUID
 
@@ -31,6 +34,12 @@ class PharmaRepository(private val dao: PharmaDao) {
         InitialData.medicines.filter { it.pharmacyId == pharmacyId }
 
     fun getCategories(): List<String> = InitialData.categories
+
+    fun getRegions(): List<String> = InitialData.regions
+
+    fun getPharmaciesByRegion(region: String): List<Pharmacy> =
+        if (region == "Toutes les régions") InitialData.pharmacies
+        else InitialData.pharmacies.filter { it.region.equals(region, ignoreCase = true) }
 
     // --- Cart Management ---
     val cartItems: Flow<List<CartItemEntity>> = dao.getAllCartItems()
@@ -145,6 +154,14 @@ class PharmaRepository(private val dao: PharmaDao) {
         dao.updateOrderStatus(orderId, status.name)
     }
 
+    suspend fun cancelOrder(orderId: String) {
+        dao.updateOrderStatus(orderId, OrderStatus.CANCELLED.name)
+    }
+
+    suspend fun deleteOrder(orderId: String) {
+        dao.deleteOrderById(orderId)
+    }
+
     // --- Prescriptions ---
     val allPrescriptions: Flow<List<PrescriptionEntity>> = dao.getAllPrescriptions()
 
@@ -154,7 +171,10 @@ class PharmaRepository(private val dao: PharmaDao) {
         prescriptionDate: String,
         photoUri: String,
         notes: String,
-        recognizedMedicines: String
+        recognizedMedicines: String,
+        pharmacyId: String = "pharm_1",
+        pharmacyName: String = "Grande Pharmacie Guigon (Dakar Plateau)",
+        pharmacyRegion: String = "Dakar"
     ): PrescriptionEntity {
         val prescription = PrescriptionEntity(
             id = UUID.randomUUID().toString(),
@@ -164,11 +184,18 @@ class PharmaRepository(private val dao: PharmaDao) {
             photoUri = photoUri,
             uploadTimestamp = System.currentTimeMillis(),
             status = "VALIDATED", // Immediate pharmacist pre-check for demo reliability
-            pharmacistNotes = if (notes.isBlank()) "Ordonnance certifiée conforme par le pharmacien de garde. Dosage vérifié." else notes,
-            recognizedMedicines = recognizedMedicines
+            pharmacistNotes = if (notes.isBlank()) "Ordonnance certifiée conforme par le pharmacien de garde de $pharmacyName. Dosage et authenticité vérifiés." else notes,
+            recognizedMedicines = recognizedMedicines,
+            pharmacyId = pharmacyId,
+            pharmacyName = pharmacyName,
+            pharmacyRegion = pharmacyRegion
         )
         dao.insertPrescription(prescription)
         return prescription
+    }
+
+    suspend fun deletePrescription(prescriptionId: String) {
+        dao.deletePrescriptionById(prescriptionId)
     }
 
     // --- Medication Reminders ---
@@ -194,8 +221,216 @@ class PharmaRepository(private val dao: PharmaDao) {
         dao.toggleReminder(id, isActive)
     }
 
-    // Pre-populate sample order and reminder if empty
+    // --- User Profile Management ---
+    val userProfile: Flow<UserProfileEntity?> = dao.getUserProfile()
+
+    suspend fun saveUserProfile(profile: UserProfileEntity) {
+        dao.insertUserProfile(profile)
+    }
+
+    // --- Delivery Addresses Management ---
+    val deliveryAddresses: Flow<List<DeliveryAddressEntity>> = dao.getAllAddresses()
+
+    fun getDefaultAddress(): Flow<DeliveryAddressEntity?> = dao.getDefaultAddress()
+
+    suspend fun addDeliveryAddress(
+        title: String,
+        recipientName: String,
+        contactPhone: String,
+        fullAddress: String,
+        neighborhood: String,
+        city: String = "Dakar",
+        region: String = "Dakar",
+        courierInstructions: String = "",
+        isDefault: Boolean = false
+    ): DeliveryAddressEntity {
+        if (isDefault) {
+            dao.clearDefaultAddresses()
+        }
+        val newAddress = DeliveryAddressEntity(
+            id = UUID.randomUUID().toString(),
+            title = title,
+            recipientName = recipientName,
+            contactPhone = contactPhone,
+            fullAddress = fullAddress,
+            neighborhood = neighborhood,
+            city = city,
+            region = region,
+            courierInstructions = courierInstructions,
+            isDefault = isDefault,
+            createdAt = System.currentTimeMillis()
+        )
+        dao.insertAddress(newAddress)
+        return newAddress
+    }
+
+    suspend fun updateDeliveryAddress(address: DeliveryAddressEntity) {
+        if (address.isDefault) {
+            dao.clearDefaultAddresses()
+        }
+        dao.updateAddress(address)
+    }
+
+    suspend fun deleteDeliveryAddress(addressId: String) {
+        dao.deleteAddressById(addressId)
+    }
+
+    suspend fun setDefaultAddress(addressId: String) {
+        dao.clearDefaultAddresses()
+        dao.setDefaultAddress(addressId)
+    }
+
+    // Pre-populate sample profile, addresses, order, and reminder if empty
     suspend fun seedInitialUserHistoryIfEmpty() {
-        // can be called on init
+        val existingProfile = dao.getUserProfile().firstOrNull()
+        if (existingProfile == null) {
+            dao.insertUserProfile(
+                UserProfileEntity(
+                    id = "primary_user",
+                    fullName = "Mamadou Dramé",
+                    email = "drame678mamadou@gmail.com",
+                    phoneNumber = "+221 77 654 32 10",
+                    secondaryPhone = "+221 78 123 45 67",
+                    emergencyContactName = "Fatou Dramé (Épouse)",
+                    emergencyContactPhone = "+221 76 987 65 43",
+                    bloodGroup = "O+",
+                    knownAllergies = "Pénicilline (Légère réaction cutanée)",
+                    preferredPaymentMethod = "Wave Mobile Money",
+                    medicalNotes = "Suivi régulier tension artérielle & asthme léger"
+                )
+            )
+        }
+
+        val existingAddresses = dao.getAllAddresses().firstOrNull()
+        if (existingAddresses.isNullOrEmpty()) {
+            dao.insertAddress(
+                DeliveryAddressEntity(
+                    id = "addr_1",
+                    title = "Domicile (Keur Gorgui)",
+                    recipientName = "Mamadou Dramé",
+                    contactPhone = "+221 77 654 32 10",
+                    fullAddress = "Résidence Keur Gorgui, Immeuble B, Appt 42",
+                    neighborhood = "Sacré-Cœur / Keur Gorgui",
+                    city = "Dakar",
+                    region = "Dakar",
+                    courierInstructions = "2ème étage droite, sonner à l'interphone 42. Gardien au rez-de-chaussée.",
+                    isDefault = true,
+                    createdAt = System.currentTimeMillis() - 86400000L * 5
+                )
+            )
+            dao.insertAddress(
+                DeliveryAddressEntity(
+                    id = "addr_2",
+                    title = "Bureau (Dakar Plateau)",
+                    recipientName = "Mamadou Dramé",
+                    contactPhone = "+221 77 654 32 10",
+                    fullAddress = "Immeuble Fahd, 4ème étage, Rue Raffenel x Av. Ponty",
+                    neighborhood = "Plateau",
+                    city = "Dakar",
+                    region = "Dakar",
+                    courierInstructions = "Déposer à la réception / standard d'accueil au 4ème étage.",
+                    isDefault = false,
+                    createdAt = System.currentTimeMillis() - 86400000L * 3
+                )
+            )
+            dao.insertAddress(
+                DeliveryAddressEntity(
+                    id = "addr_3",
+                    title = "Maison Familiale (Mermoz)",
+                    recipientName = "Fatou Dramé",
+                    contactPhone = "+221 78 123 45 67",
+                    fullAddress = "Villa N° 12, Rue MZ-54, près de la Boulangerie",
+                    neighborhood = "Mermoz",
+                    city = "Dakar",
+                    region = "Dakar",
+                    courierInstructions = "Portail vert avec sonnette, appeler à l'arrivée.",
+                    isDefault = false,
+                    createdAt = System.currentTimeMillis() - 86400000L
+                )
+            )
+        }
+
+        val existingOrders = dao.getAllOrders().firstOrNull()
+        if (existingOrders.isNullOrEmpty()) {
+            val now = System.currentTimeMillis()
+            dao.insertOrder(
+                OrderEntity(
+                    id = "seed_order_1",
+                    orderNumber = "#PH-84210",
+                    orderTimestamp = now - 86400000L * 2, // 2 days ago
+                    status = OrderStatus.DELIVERED.name,
+                    itemsSummary = "Doliprane 1000mg x2 | Vitamine C 1000mg x1 | Sérum Physiologique 0.9% x2",
+                    subtotalFcfa = 6400,
+                    deliveryFeeFcfa = 1000,
+                    totalFcfa = 7400,
+                    pharmacyId = "pharm_1",
+                    pharmacyName = "Grande Pharmacie Guigon (Dakar Plateau)",
+                    pharmacyAddress = "Avenue de la République, Face Hôpital Principal, Dakar",
+                    deliveryAddress = "Résidence Keur Gorgui, Immeuble B, Appt 42, Dakar",
+                    patientName = "Mamadou Dramé",
+                    patientPhone = "+221 77 654 32 10",
+                    paymentMethod = "WAVE",
+                    paymentTransactionId = "TXN-WAV-842109",
+                    isPrescriptionVerified = true,
+                    deliveryPinCode = "5821",
+                    courierName = "Mamadou Seck (Coursier certifié)",
+                    courierPhone = "+221 77 412 88 99",
+                    deliveryEtaMinutes = 20,
+                    invoiceQrCodePayload = "PHARMADIRECT-SECURE-INVOICE|#PH-84210|TXN-WAV-842109|7400|FCFA|DELIVERED"
+                )
+            )
+            dao.insertOrder(
+                OrderEntity(
+                    id = "seed_order_2",
+                    orderNumber = "#PH-62194",
+                    orderTimestamp = now - 86400000L * 6, // 6 days ago
+                    status = OrderStatus.DELIVERED.name,
+                    itemsSummary = "Amoxicilline 1g Sandoz x1 | Bétadine Dermique 10% x1 | Pansements Stériles Urgo x1",
+                    subtotalFcfa = 8200,
+                    deliveryFeeFcfa = 1500,
+                    totalFcfa = 9700,
+                    pharmacyId = "pharm_3",
+                    pharmacyName = "Grande Pharmacie des Almadies",
+                    pharmacyAddress = "Route des Almadies, Zone Commerciale, Dakar",
+                    deliveryAddress = "Résidence Keur Gorgui, Immeuble B, Appt 42, Dakar",
+                    patientName = "Mamadou Dramé",
+                    patientPhone = "+221 77 654 32 10",
+                    paymentMethod = "ORANGE_MONEY",
+                    paymentTransactionId = "TXN-OM-621948",
+                    isPrescriptionVerified = true,
+                    deliveryPinCode = "7342",
+                    courierName = "Ousmane Faye (Express Santé)",
+                    courierPhone = "+221 78 523 11 44",
+                    deliveryEtaMinutes = 25,
+                    invoiceQrCodePayload = "PHARMADIRECT-SECURE-INVOICE|#PH-62194|TXN-OM-621948|9700|FCFA|DELIVERED"
+                )
+            )
+            dao.insertOrder(
+                OrderEntity(
+                    id = "seed_order_3",
+                    orderNumber = "#PH-93512",
+                    orderTimestamp = now - 86400000L * 12, // 12 days ago
+                    status = OrderStatus.DELIVERED.name,
+                    itemsSummary = "Coartem 80/480mg (Antipaludéen) x1 | Paracétamol 500mg Biogaran x2",
+                    subtotalFcfa = 6200,
+                    deliveryFeeFcfa = 1200,
+                    totalFcfa = 7400,
+                    pharmacyId = "pharm_2",
+                    pharmacyName = "Pharmacie Pasteur & Santé (Mermoz)",
+                    pharmacyAddress = "Boulevard de la Liberté, Rond-point Étoile, Dakar",
+                    deliveryAddress = "Villa N° 12, Rue MZ-54, Mermoz, Dakar",
+                    patientName = "Fatou Dramé",
+                    patientPhone = "+221 78 123 45 67",
+                    paymentMethod = "FREE_MONEY",
+                    paymentTransactionId = "TXN-FRE-935123",
+                    isPrescriptionVerified = true,
+                    deliveryPinCode = "4190",
+                    courierName = "Cheikh Kane (Livreur pharma agréé)",
+                    courierPhone = "+221 76 901 33 22",
+                    deliveryEtaMinutes = 20,
+                    invoiceQrCodePayload = "PHARMADIRECT-SECURE-INVOICE|#PH-93512|TXN-FRE-935123|7400|FCFA|DELIVERED"
+                )
+            )
+        }
     }
 }
