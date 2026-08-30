@@ -123,6 +123,7 @@ fun CatalogScreen(
 
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
+    val selectedRegion by viewModel.selectedRegion.collectAsStateWithLifecycle()
     val dutyOnly by viewModel.dutyOnlyFilter.collectAsStateWithLifecycle()
     val userLocation by viewModel.userLocation.collectAsStateWithLifecycle()
     val searchRadiusKm by viewModel.searchRadiusKm.collectAsStateWithLifecycle()
@@ -414,9 +415,29 @@ fun CatalogScreen(
                     }
                 }
 
+                // Region Filter Horizontal Chips (All 14 Regions of Senegal)
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items(viewModel.regions) { region ->
+                        val isSelected = selectedRegion == region
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.onRegionSelected(region) },
+                            label = { Text(region, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MedicalTealPrimary,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                }
+
                 // Filter & Sort Chips Row
                 LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -919,14 +940,31 @@ fun CatalogScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = preset.name,
+                                                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
+                                                fontSize = 12.sp,
+                                                color = TextPrimaryDark,
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .background(MedicalTealPrimary.copy(alpha = 0.15f))
+                                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                                            ) {
+                                                Text(
+                                                    text = preset.region,
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MedicalTealDark
+                                                )
+                                            }
+                                        }
                                         Text(
-                                            text = preset.name,
-                                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
-                                            fontSize = 12.sp,
-                                            color = TextPrimaryDark
-                                        )
-                                        Text(
-                                            text = "${preset.district} (${preset.latitude}, ${preset.longitude})",
+                                            text = "${preset.district} • ${preset.city} (${preset.latitude}, ${preset.longitude})",
                                             fontSize = 10.sp,
                                             color = TextSecondaryMuted
                                         )

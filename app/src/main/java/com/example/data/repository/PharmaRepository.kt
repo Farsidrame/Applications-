@@ -330,20 +330,50 @@ class PharmaRepository(private val dao: PharmaDao) {
                     region = "Dakar",
                     courierInstructions = "Déposer à la réception / standard d'accueil au 4ème étage.",
                     isDefault = false,
-                    createdAt = System.currentTimeMillis() - 86400000L * 3
+                    createdAt = System.currentTimeMillis() - 86400000L * 4
                 )
             )
             dao.insertAddress(
                 DeliveryAddressEntity(
                     id = "addr_3",
-                    title = "Maison Familiale (Mermoz)",
+                    title = "Maison Familiale (Thiès Centre)",
                     recipientName = "Fatou Dramé",
                     contactPhone = "+221 78 123 45 67",
-                    fullAddress = "Villa N° 12, Rue MZ-54, près de la Boulangerie",
-                    neighborhood = "Mermoz",
-                    city = "Dakar",
-                    region = "Dakar",
-                    courierInstructions = "Portail vert avec sonnette, appeler à l'arrivée.",
+                    fullAddress = "Villa N° 18, Avenue de Caen près de la Place de France",
+                    neighborhood = "Thiès Centre (Place de France)",
+                    city = "Thiès",
+                    region = "Thiès",
+                    courierInstructions = "Grande porte métallique bleue, sonner ou appeler à l'arrivée.",
+                    isDefault = false,
+                    createdAt = System.currentTimeMillis() - 86400000L * 3
+                )
+            )
+            dao.insertAddress(
+                DeliveryAddressEntity(
+                    id = "addr_4",
+                    title = "Résidence Touba (Diourbel)",
+                    recipientName = "Serigne Dramé",
+                    contactPhone = "+221 77 333 44 55",
+                    fullAddress = "Quartier Dianatoul Mahwa, Face Grande Mosquée",
+                    neighborhood = "Dianatoul Mahwa",
+                    city = "Touba",
+                    region = "Diourbel",
+                    courierInstructions = "Livraison directe à domicile, appeler avant le départ.",
+                    isDefault = false,
+                    createdAt = System.currentTimeMillis() - 86400000L * 2
+                )
+            )
+            dao.insertAddress(
+                DeliveryAddressEntity(
+                    id = "addr_5",
+                    title = "Maison Saint-Louis (Île Ndar)",
+                    recipientName = "Awa Dramé",
+                    contactPhone = "+221 76 555 12 34",
+                    fullAddress = "Rue Blaise Diagne x Rue Blanchot, Île de Saint-Louis",
+                    neighborhood = "Île de Saint-Louis (Ndar Escale)",
+                    city = "Saint-Louis",
+                    region = "Saint-Louis",
+                    courierInstructions = "Bâtiment colonial à étage, livraison au rez-de-chaussée.",
                     isDefault = false,
                     createdAt = System.currentTimeMillis() - 86400000L
                 )

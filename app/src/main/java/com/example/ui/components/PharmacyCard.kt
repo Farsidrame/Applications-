@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Pharmacy
+import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
@@ -68,10 +69,30 @@ fun PharmacyCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (pharmacy.isDutyPharmacy) {
-                    DutyBadge()
-                } else {
-                    CertifiedBadge(text = "Pharmacie Ouverte")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (pharmacy.isDutyPharmacy) {
+                        DutyBadge()
+                    } else {
+                        CertifiedBadge(text = "Pharmacie Ouverte")
+                    }
+
+                    // Region badge
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(MedicalTealLight)
+                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = pharmacy.region,
+                            color = MedicalTealDark,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 Row(

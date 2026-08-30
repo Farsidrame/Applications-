@@ -22,12 +22,251 @@ object InitialData {
         "Toutes les régions",
         "Dakar",
         "Thiès",
+        "Diourbel",
         "Saint-Louis",
-        "Touba / Mbacké",
-        "Mbour / Saly",
         "Kaolack",
+        "Fatick",
+        "Kaffrine",
+        "Louga",
+        "Matam",
         "Ziguinchor",
-        "Autres Régions"
+        "Sédhiou",
+        "Kolda",
+        "Tambacounda",
+        "Kédougou"
+    )
+
+    val senegalRegionsList = listOf(
+        "Dakar",
+        "Thiès",
+        "Diourbel",
+        "Saint-Louis",
+        "Kaolack",
+        "Fatick",
+        "Kaffrine",
+        "Louga",
+        "Matam",
+        "Ziguinchor",
+        "Sédhiou",
+        "Kolda",
+        "Tambacounda",
+        "Kédougou"
+    )
+
+    data class SenegalRegionInfo(
+        val regionName: String,
+        val capital: String,
+        val departments: List<String>,
+        val popularCities: List<String>,
+        val popularNeighborhoods: List<String>
+    )
+
+    val senegalAdministrativeData = mapOf(
+        "Dakar" to SenegalRegionInfo(
+            regionName = "Dakar",
+            capital = "Dakar",
+            departments = listOf("Dakar", "Pikine", "Guédiawaye", "Keur Massar", "Rufisque"),
+            popularCities = listOf("Dakar", "Pikine", "Guédiawaye", "Keur Massar", "Rufisque", "Diamniadio", "Bargny", "Sébikotane"),
+            popularNeighborhoods = listOf(
+                "Sacré-Cœur / Keur Gorgui",
+                "Plateau / Centre-ville",
+                "Mermoz - VDN",
+                "Almadies / Ngor",
+                "Ouakam / Mamelles",
+                "Fann Résidence / Point E",
+                "Médina / Tilène",
+                "Parcelles Assainies (Unités 1 à 26)",
+                "Maristes / Hann",
+                "Yoff / Nord Foire",
+                "Liberté 6 / SICAP",
+                "Grand Dakar / HLM",
+                "Keur Massar Village",
+                "Rufisque Escale / Dangou",
+                "Diamniadio Pôle Urbain"
+            )
+        ),
+        "Thiès" to SenegalRegionInfo(
+            regionName = "Thiès",
+            capital = "Thiès",
+            departments = listOf("Thiès", "Mbour", "Tivaouane"),
+            popularCities = listOf("Thiès", "Mbour", "Saly Portudal", "Tivaouane", "Somone", "Popenguine", "Joal-Fadiouth", "Pout", "Kayar"),
+            popularNeighborhoods = listOf(
+                "Thiès Centre (Place de France)",
+                "Randoulène Sud & Nord",
+                "Dixième / Grand Standing",
+                "Saly Portudal (Station balnéaire)",
+                "Mbour Escale / Grand Mbour",
+                "Tivaouane Centre (Quartier Mosquée)",
+                "Somone Plage",
+                "Popenguine Falaise"
+            )
+        ),
+        "Diourbel" to SenegalRegionInfo(
+            regionName = "Diourbel",
+            capital = "Diourbel",
+            departments = listOf("Diourbel", "Mbacké", "Bambey"),
+            popularCities = listOf("Touba", "Mbacké", "Diourbel", "Bambey", "Ndindy"),
+            popularNeighborhoods = listOf(
+                "Touba Grande Mosquée (28)",
+                "Dianatoul Mahwa (Touba)",
+                "Darou Khoudoss (Touba)",
+                "Mbacké Centre Escale",
+                "Mbacké Khewar",
+                "Diourbel Ndar Gouye",
+                "Diourbel Escale / Médina",
+                "Bambey Université / Centre"
+            )
+        ),
+        "Saint-Louis" to SenegalRegionInfo(
+            regionName = "Saint-Louis",
+            capital = "Saint-Louis",
+            departments = listOf("Saint-Louis", "Dagana", "Podor"),
+            popularCities = listOf("Saint-Louis", "Richard-Toll", "Podor", "Dagana", "Ross Béthio", "Ndioum"),
+            popularNeighborhoods = listOf(
+                "Île de Saint-Louis (Ndar Escale)",
+                "Sor / Balacoss / Pikine",
+                "Guet Ndar / Hydrobase",
+                "Richard-Toll Centre (Sucrerie CSS)",
+                "Podor Fleuve / Escale",
+                "Dagana Centre",
+                "Ndioum Escale"
+            )
+        ),
+        "Kaolack" to SenegalRegionInfo(
+            regionName = "Kaolack",
+            capital = "Kaolack",
+            departments = listOf("Kaolack", "Nioro du Rip", "Guinguinéo"),
+            popularCities = listOf("Kaolack", "Nioro du Rip", "Guinguinéo", "Kahone", "Médina Baye"),
+            popularNeighborhoods = listOf(
+                "Kaolack Centre (Escale / Marché)",
+                "Médina Baye (Grande Mosquée)",
+                "Léona / Ndorong",
+                "Kasnack / Sara Nimzatt",
+                "Nioro du Rip Centre",
+                "Guinguinéo Escale"
+            )
+        ),
+        "Fatick" to SenegalRegionInfo(
+            regionName = "Fatick",
+            capital = "Fatick",
+            departments = listOf("Fatick", "Foundiougne", "Gossas"),
+            popularCities = listOf("Fatick", "Foundiougne", "Gossas", "Diofior", "Sokone", "Passy"),
+            popularNeighborhoods = listOf(
+                "Fatick Escale (Sine)",
+                "Ndouck / Logandème",
+                "Foundiougne Saloum (Centre)",
+                "Gossas Mame Diarra",
+                "Sokone Escale",
+                "Passy Centre"
+            )
+        ),
+        "Kaffrine" to SenegalRegionInfo(
+            regionName = "Kaffrine",
+            capital = "Kaffrine",
+            departments = listOf("Kaffrine", "Koungheul", "Birkelane", "Malem Hodar"),
+            popularCities = listOf("Kaffrine", "Koungheul", "Birkelane", "Malem Hodar"),
+            popularNeighborhoods = listOf(
+                "Kaffrine Ndoucoumane (Centre)",
+                "Kaffrine Escale",
+                "Koungheul Escale",
+                "Birkelane Carrefour",
+                "Malem Hodar Centre"
+            )
+        ),
+        "Louga" to SenegalRegionInfo(
+            regionName = "Louga",
+            capital = "Louga",
+            departments = listOf("Louga", "Linguère", "Kébémer"),
+            popularCities = listOf("Louga", "Linguère", "Kébémer", "Dahra Djoloff", "Darou Mousty"),
+            popularNeighborhoods = listOf(
+                "Louga Ndiambour (Centre)",
+                "Artillerie / Montagne",
+                "Linguère Djoloff (Escale)",
+                "Dahra Centre",
+                "Kébémer Escale",
+                "Darou Mousty Centre"
+            )
+        ),
+        "Matam" to SenegalRegionInfo(
+            regionName = "Matam",
+            capital = "Matam",
+            departments = listOf("Matam", "Ourossogui / Kanel", "Ranérou Ferlo"),
+            popularCities = listOf("Matam", "Ourossogui", "Kanel", "Ranérou", "Thilogne", "Semmé"),
+            popularNeighborhoods = listOf(
+                "Matam Fouta Escale (Soubalo)",
+                "Ourossogui Carrefour",
+                "Kanel Escale",
+                "Ranérou Ferlo Centre",
+                "Thilogne Fouta"
+            )
+        ),
+        "Ziguinchor" to SenegalRegionInfo(
+            regionName = "Ziguinchor",
+            capital = "Ziguinchor",
+            departments = listOf("Ziguinchor", "Bignona", "Oussouye"),
+            popularCities = listOf("Ziguinchor", "Cap Skirring", "Bignona", "Oussouye", "Elinkine", "Kafountine"),
+            popularNeighborhoods = listOf(
+                "Ziguinchor Escale (Port)",
+                "Boucotte / Tilène",
+                "Santhiaba / Néma",
+                "Cap Skirring Plage & Club",
+                "Bignona Fogny (Centre)",
+                "Oussouye Kassa"
+            )
+        ),
+        "Sédhiou" to SenegalRegionInfo(
+            regionName = "Sédhiou",
+            capital = "Sédhiou",
+            departments = listOf("Sédhiou", "Bounkiling", "Goudomp"),
+            popularCities = listOf("Sédhiou", "Bounkiling", "Goudomp", "Marsassoum", "Diannah Malary"),
+            popularNeighborhoods = listOf(
+                "Sédhiou Pakao (Centre)",
+                "Santassou / Moricounda",
+                "Bounkiling Escale",
+                "Goudomp Balantacounda",
+                "Marsassoum Centre"
+            )
+        ),
+        "Kolda" to SenegalRegionInfo(
+            regionName = "Kolda",
+            capital = "Kolda",
+            departments = listOf("Kolda", "Vélingara", "Médina Yoro Foulah"),
+            popularCities = listOf("Kolda", "Vélingara", "Médina Yoro Foulah", "Dabo", "Salikégné"),
+            popularNeighborhoods = listOf(
+                "Kolda Sikilo",
+                "Doumassou / Saré Kémo",
+                "Vélingara Grand Carrefour",
+                "Médina Yoro Foulah Centre",
+                "Dabo Escale"
+            )
+        ),
+        "Tambacounda" to SenegalRegionInfo(
+            regionName = "Tambacounda",
+            capital = "Tambacounda",
+            departments = listOf("Tambacounda", "Bakel", "Goudiry", "Koumpentoum"),
+            popularCities = listOf("Tambacounda", "Bakel", "Goudiry", "Koumpentoum", "Kidira"),
+            popularNeighborhoods = listOf(
+                "Tambacounda Centre (Gare)",
+                "Liberté / Médinacoura",
+                "Abattoirs / Quinzambougou",
+                "Bakel Galam (Escale)",
+                "Koumpentoum Niani",
+                "Goudiry Centre"
+            )
+        ),
+        "Kédougou" to SenegalRegionInfo(
+            regionName = "Kédougou",
+            capital = "Kédougou",
+            departments = listOf("Kédougou", "Saraya", "Salémata"),
+            popularCities = listOf("Kédougou", "Saraya", "Salémata", "Mako", "Fongolimbi", "Bandafassi"),
+            popularNeighborhoods = listOf(
+                "Kédougou Pays Bassari (Centre)",
+                "Dandé Mayo / Lawol Tamba",
+                "Saraya Zone Minière",
+                "Salémata Bédik",
+                "Mako Escale"
+            )
+        )
     )
 
     data class LocationPreset(
@@ -41,6 +280,7 @@ object InitialData {
     )
 
     val locationPresets = listOf(
+        // Dakar
         LocationPreset("loc_1", "Résidence Keur Gorgui", "Sacré-Cœur / Keur Gorgui", "Dakar", "Dakar", 14.7088, -17.4725),
         LocationPreset("loc_2", "Dakar Plateau (Centre-Ville)", "Plateau", "Dakar", "Dakar", 14.6698, -17.4339),
         LocationPreset("loc_3", "Mermoz - VDN", "Mermoz", "Dakar", "Dakar", 14.7120, -17.4760),
@@ -50,16 +290,70 @@ object InitialData {
         LocationPreset("loc_7", "Parcelles Assainies", "Parcelles Assainies", "Dakar", "Dakar", 14.7570, -17.4350),
         LocationPreset("loc_8", "Keur Massar", "Keur Massar", "Dakar", "Dakar", 14.7797, -17.3114),
         LocationPreset("loc_9", "Rufisque Escale", "Rufisque Centre", "Rufisque", "Dakar", 14.7167, -17.2667),
+        LocationPreset("loc_9b", "Diamniadio Pôle Urbain", "Diamniadio", "Diamniadio", "Dakar", 14.7250, -17.1830),
+
+        // Thiès
         LocationPreset("loc_10", "Thiès Centre (Place de France)", "Thiès Centre", "Thiès", "Thiès", 14.7910, -16.9260),
-        LocationPreset("loc_11", "Saly Portudal & Mbour", "Saly", "Mbour", "Mbour / Saly", 14.4430, -16.9890),
-        LocationPreset("loc_12", "Saint-Louis (Île Ndar)", "Île de Saint-Louis", "Saint-Louis", "Saint-Louis", 16.0244, -16.4897),
-        LocationPreset("loc_13", "Touba Mosquée", "Touba Centre", "Touba", "Touba / Mbacké", 14.8626, -15.8756),
-        LocationPreset("loc_14", "Kaolack Centre", "Kaolack Centre", "Kaolack", "Kaolack", 14.1500, -16.0833),
-        LocationPreset("loc_15", "Ziguinchor Escale", "Ziguinchor Escale", "Ziguinchor", "Ziguinchor", 12.5680, -16.2730)
+        LocationPreset("loc_11", "Saly Portudal & Mbour", "Saly", "Mbour", "Thiès", 14.4430, -16.9890),
+        LocationPreset("loc_11b", "Tivaouane Ville Sainte", "Tivaouane Centre", "Tivaouane", "Thiès", 14.9540, -16.8240),
+
+        // Diourbel (Touba, Mbacké, Diourbel, Bambey)
+        LocationPreset("loc_12", "Touba Mosquée (28)", "Touba Mosquée", "Touba", "Diourbel", 14.8626, -15.8756),
+        LocationPreset("loc_12b", "Mbacké Centre Escale", "Mbacké Centre", "Mbacké", "Diourbel", 14.7903, -15.9080),
+        LocationPreset("loc_12c", "Diourbel Ndar Gouye", "Diourbel Centre", "Diourbel", "Diourbel", 14.6540, -16.2340),
+        LocationPreset("loc_12d", "Bambey Université", "Bambey Centre", "Bambey", "Diourbel", 14.6970, -16.4520),
+
+        // Saint-Louis
+        LocationPreset("loc_13", "Saint-Louis (Île Ndar)", "Île de Saint-Louis", "Saint-Louis", "Saint-Louis", 16.0244, -16.4897),
+        LocationPreset("loc_13b", "Richard-Toll Sucrerie", "Richard-Toll Centre", "Richard-Toll", "Saint-Louis", 16.4625, -15.7008),
+        LocationPreset("loc_13c", "Podor Fleuve", "Podor Centre", "Podor", "Saint-Louis", 16.6500, -14.9667),
+
+        // Kaolack
+        LocationPreset("loc_14", "Kaolack Centre (Saloum)", "Kaolack Centre", "Kaolack", "Kaolack", 14.1500, -16.0833),
+        LocationPreset("loc_14b", "Nioro du Rip", "Nioro Centre", "Nioro du Rip", "Kaolack", 13.7430, -15.7720),
+
+        // Fatick
+        LocationPreset("loc_15", "Fatick Escale (Sine)", "Fatick Centre", "Fatick", "Fatick", 14.3330, -16.4000),
+        LocationPreset("loc_15b", "Foundiougne Saloum", "Foundiougne Centre", "Foundiougne", "Fatick", 14.1333, -16.4667),
+
+        // Kaffrine
+        LocationPreset("loc_16", "Kaffrine Ndoucoumane", "Kaffrine Centre", "Kaffrine", "Kaffrine", 14.1060, -15.5420),
+        LocationPreset("loc_16b", "Koungheul Escale", "Koungheul Centre", "Koungheul", "Kaffrine", 13.9830, -14.8000),
+
+        // Louga
+        LocationPreset("loc_17", "Louga Ndiambour", "Louga Centre", "Louga", "Louga", 15.6180, -16.2240),
+        LocationPreset("loc_17b", "Linguère Djoloff", "Linguère Centre", "Linguère", "Louga", 15.3950, -15.1190),
+
+        // Matam
+        LocationPreset("loc_18", "Matam Fouta Escale", "Matam Escale", "Matam", "Matam", 15.6550, -13.2550),
+        LocationPreset("loc_18b", "Ourossogui Carrefour", "Ourossogui Centre", "Ourossogui", "Matam", 15.6050, -13.3180),
+
+        // Ziguinchor
+        LocationPreset("loc_19", "Ziguinchor Escale", "Ziguinchor Escale", "Ziguinchor", "Ziguinchor", 12.5680, -16.2730),
+        LocationPreset("loc_19b", "Cap Skirring Plage", "Cap Skirring", "Cap Skirring", "Ziguinchor", 12.3550, -16.7450),
+        LocationPreset("loc_19c", "Bignona Fogny", "Bignona Centre", "Bignona", "Ziguinchor", 12.8110, -16.2300),
+
+        // Sédhiou
+        LocationPreset("loc_20", "Sédhiou Pakao", "Sédhiou Centre", "Sédhiou", "Sédhiou", 12.7080, -15.5560),
+        LocationPreset("loc_20b", "Goudomp Balantacounda", "Goudomp Centre", "Goudomp", "Sédhiou", 12.5780, -15.8710),
+
+        // Kolda
+        LocationPreset("loc_21", "Kolda Fouladou", "Kolda Centre", "Kolda", "Kolda", 12.8830, -14.9500),
+        LocationPreset("loc_21b", "Vélingara Carrefour", "Vélingara Centre", "Vélingara", "Kolda", 13.1500, -14.1167),
+
+        // Tambacounda
+        LocationPreset("loc_22", "Tambacounda Gare", "Tambacounda Centre", "Tambacounda", "Tambacounda", 13.7710, -13.6770),
+        LocationPreset("loc_22b", "Bakel Galam", "Bakel Escale", "Bakel", "Tambacounda", 14.9030, -12.4640),
+
+        // Kédougou
+        LocationPreset("loc_23", "Kédougou Pays Bassari", "Kédougou Centre", "Kédougou", "Kédougou", 12.5570, -12.1760),
+        LocationPreset("loc_23b", "Saraya Zone Minière", "Saraya Centre", "Saraya", "Kédougou", 12.8330, -11.7500)
     )
 
     val pharmacies = listOf(
-        // === DAKAR REGION ===
+        // ==========================================
+        // 1. RÉGION DE DAKAR
+        // ==========================================
         Pharmacy(
             id = "pharm_1",
             name = "Pharmacie Centrale de Garde (Plateau)",
@@ -220,8 +514,30 @@ object InitialData {
             latitude = 14.7167,
             longitude = -17.2667
         ),
+        Pharmacy(
+            id = "pharm_8b",
+            name = "Pharmacie Diamniadio Pôle Urbain",
+            address = "Avenue Nelson Mandela, Face Ministère",
+            district = "Diamniadio Centre",
+            city = "Diamniadio",
+            region = "Dakar",
+            distanceKm = 15.0,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 98,
+            phoneNumber = "+221 33 865 40 10",
+            openingHours = "24h/24 - 7j/7",
+            isCertified = true,
+            estimatedDeliveryMinutes = 30,
+            deliveryFeeFcfa = 1500,
+            pharmacistInCharge = "Dr. Khadidiatou Faye",
+            latitude = 14.7250,
+            longitude = -17.1830
+        ),
 
-        // === THIÈS REGION ===
+        // ==========================================
+        // 2. RÉGION DE THIÈS
+        // ==========================================
         Pharmacy(
             id = "pharm_9",
             name = "Pharmacie Lat-Dior de Thiès (Garde)",
@@ -262,15 +578,13 @@ object InitialData {
             latitude = 14.7820,
             longitude = -16.9380
         ),
-
-        // === MBOUR & SALY (THIÈS REGION) ===
         Pharmacy(
             id = "pharm_11",
             name = "Pharmacie de Saly Portudal",
             address = "Route Touristique de Saly, Face Centre Commercial",
             district = "Saly Portudal",
             city = "Mbour",
-            region = "Mbour / Saly",
+            region = "Thiès",
             distanceKm = 1.2,
             isDutyPharmacy = true,
             rating = 4.9,
@@ -290,7 +604,7 @@ object InitialData {
             address = "Rue du Marché Central, Mbour",
             district = "Mbour Centre",
             city = "Mbour",
-            region = "Mbour / Saly",
+            region = "Thiès",
             distanceKm = 2.0,
             isDutyPharmacy = false,
             rating = 4.7,
@@ -304,8 +618,134 @@ object InitialData {
             latitude = 14.4220,
             longitude = -16.9630
         ),
+        Pharmacy(
+            id = "pharm_12b",
+            name = "Pharmacie Maodo Malick (Tivaouane)",
+            address = "Avenue El Hadj Malick Sy, Face Grande Mosquée",
+            district = "Tivaouane Centre",
+            city = "Tivaouane",
+            region = "Thiès",
+            distanceKm = 1.1,
+            isDutyPharmacy = true,
+            rating = 4.9,
+            reviewCount = 135,
+            phoneNumber = "+221 33 955 12 40",
+            openingHours = "24h/24 - 7j/7",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Moustapha Sy",
+            latitude = 14.9540,
+            longitude = -16.8240
+        ),
 
-        // === SAINT-LOUIS REGION ===
+        // ==========================================
+        // 3. RÉGION DE DIOURBEL
+        // ==========================================
+        Pharmacy(
+            id = "pharm_15",
+            name = "Pharmacie de la Grande Mosquée Touba",
+            address = "Rond-point 28 x Boulevard Serigne Abdoul Ahad",
+            district = "Touba Mosquée",
+            city = "Touba",
+            region = "Diourbel",
+            distanceKm = 0.9,
+            isDutyPharmacy = true,
+            rating = 4.9,
+            reviewCount = 280,
+            phoneNumber = "+221 33 978 12 00",
+            openingHours = "24h/24 - 7j/7 (Permanence continue)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Serigne Mor Mbacké",
+            latitude = 14.8626,
+            longitude = -15.8756
+        ),
+        Pharmacy(
+            id = "pharm_15b",
+            name = "Pharmacie Dianatoul Mahwa Touba",
+            address = "Avenue Cheikh Ibra Fall, Quartier Dianatoul",
+            district = "Dianatoul Mahwa",
+            city = "Touba",
+            region = "Diourbel",
+            distanceKm = 1.8,
+            isDutyPharmacy = false,
+            rating = 4.8,
+            reviewCount = 140,
+            phoneNumber = "+221 33 978 44 55",
+            openingHours = "08:00 - 23:00",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Abdoulaye Diouf",
+            latitude = 14.8750,
+            longitude = -15.8620
+        ),
+        Pharmacy(
+            id = "pharm_16",
+            name = "Pharmacie Mbacké Escale",
+            address = "Avenue de l'Hôpital, Centre-ville Mbacké",
+            district = "Mbacké Centre",
+            city = "Mbacké",
+            region = "Diourbel",
+            distanceKm = 2.5,
+            isDutyPharmacy = true,
+            rating = 4.7,
+            reviewCount = 92,
+            phoneNumber = "+221 33 979 20 40",
+            openingHours = "24h/24 (Garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Fatou Samb",
+            latitude = 14.7903,
+            longitude = -15.9080
+        ),
+        Pharmacy(
+            id = "pharm_16b",
+            name = "Pharmacie Ndar Gouye Diourbel",
+            address = "Avenue Cheikh Ahmadou Bamba, Face Gouvernance",
+            district = "Diourbel Centre",
+            city = "Diourbel",
+            region = "Diourbel",
+            distanceKm = 0.8,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 115,
+            phoneNumber = "+221 33 971 10 25",
+            openingHours = "24h/24 - 7j/7",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Mbaye Gueye",
+            latitude = 14.6540,
+            longitude = -16.2340
+        ),
+        Pharmacy(
+            id = "pharm_16c",
+            name = "Pharmacie du Baol Bambey",
+            address = "Route Nationale 3, Face Université Alioune Diop",
+            district = "Bambey Centre",
+            city = "Bambey",
+            region = "Diourbel",
+            distanceKm = 1.0,
+            isDutyPharmacy = false,
+            rating = 4.7,
+            reviewCount = 68,
+            phoneNumber = "+221 33 973 15 10",
+            openingHours = "08:00 - 22:00",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Adja Coumba Fall",
+            latitude = 14.6970,
+            longitude = -16.4520
+        ),
+
+        // ==========================================
+        // 4. RÉGION DE SAINT-LOUIS
+        // ==========================================
         Pharmacy(
             id = "pharm_13",
             name = "Pharmacie du Fleuve Saint-Louis (Ndar)",
@@ -346,50 +786,50 @@ object InitialData {
             latitude = 16.0150,
             longitude = -16.4950
         ),
-
-        // === TOUBA & MBACKÉ (DIOURBEL REGION) ===
         Pharmacy(
-            id = "pharm_15",
-            name = "Pharmacie de la Grande Mosquée Touba",
-            address = "Rond-point 28 x Boulevard Serigne Abdoul Ahad",
-            district = "Touba Mosquée",
-            city = "Touba",
-            region = "Touba / Mbacké",
-            distanceKm = 0.9,
+            id = "pharm_14b",
+            name = "Pharmacie de la Canne à Sucre (Richard-Toll)",
+            address = "Boulevard de la Taouey, Face CSS",
+            district = "Richard-Toll Centre",
+            city = "Richard-Toll",
+            region = "Saint-Louis",
+            distanceKm = 1.2,
             isDutyPharmacy = true,
-            rating = 4.9,
-            reviewCount = 280,
-            phoneNumber = "+221 33 978 12 00",
-            openingHours = "24h/24 - 7j/7 (Permanence continue)",
-            isCertified = true,
-            estimatedDeliveryMinutes = 20,
-            deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Serigne Mor Mbacké",
-            latitude = 14.8626,
-            longitude = -15.8756
-        ),
-        Pharmacy(
-            id = "pharm_16",
-            name = "Pharmacie Mbacké Escale",
-            address = "Avenue de l'Hôpital, Centre-ville Mbacké",
-            district = "Mbacké Centre",
-            city = "Mbacké",
-            region = "Touba / Mbacké",
-            distanceKm = 2.5,
-            isDutyPharmacy = false,
-            rating = 4.7,
-            reviewCount = 92,
-            phoneNumber = "+221 33 979 20 40",
-            openingHours = "07:30 - 23:00",
+            rating = 4.8,
+            reviewCount = 94,
+            phoneNumber = "+221 33 963 11 05",
+            openingHours = "24h/24 (Garde)",
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Fatou Samb",
-            latitude = 14.7903,
-            longitude = -15.9080
+            pharmacistInCharge = "Dr. Oumar Wade",
+            latitude = 16.4625,
+            longitude = -15.7008
+        ),
+        Pharmacy(
+            id = "pharm_14c",
+            name = "Pharmacie de l'Île à Morphil (Podor)",
+            address = "Quai Faidherbe, Bord Fleuve",
+            district = "Podor Escale",
+            city = "Podor",
+            region = "Saint-Louis",
+            distanceKm = 0.9,
+            isDutyPharmacy = true,
+            rating = 4.7,
+            reviewCount = 55,
+            phoneNumber = "+221 33 965 10 30",
+            openingHours = "24h/24 - 7j/7",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Thierno Ba",
+            latitude = 16.6500,
+            longitude = -14.9667
         ),
 
-        // === KAOLACK REGION ===
+        // ==========================================
+        // 5. RÉGION DE KAOLACK
+        // ==========================================
         Pharmacy(
             id = "pharm_17",
             name = "Pharmacie du Saloum de Garde",
@@ -430,8 +870,306 @@ object InitialData {
             latitude = 14.1620,
             longitude = -16.0710
         ),
+        Pharmacy(
+            id = "pharm_18b",
+            name = "Pharmacie Maba Diakhou (Nioro)",
+            address = "Avenue de l'Indépendance, Route Gambie",
+            district = "Nioro Centre",
+            city = "Nioro du Rip",
+            region = "Kaolack",
+            distanceKm = 1.0,
+            isDutyPharmacy = true,
+            rating = 4.7,
+            reviewCount = 62,
+            phoneNumber = "+221 33 948 10 20",
+            openingHours = "24h/24 (Garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Alioune Badara Diack",
+            latitude = 13.7430,
+            longitude = -15.7720
+        ),
 
-        // === ZIGUINCHOR REGION (CASAMANCE) ===
+        // ==========================================
+        // 6. RÉGION DE FATICK
+        // ==========================================
+        Pharmacy(
+            id = "pharm_24",
+            name = "Pharmacie du Sine Fatick (Garde)",
+            address = "Route Nationale 1, Fatick Escale",
+            district = "Fatick Escale",
+            city = "Fatick",
+            region = "Fatick",
+            distanceKm = 1.1,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 82,
+            phoneNumber = "+221 33 949 10 33",
+            openingHours = "24h/24 (Pharmacie de garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Moustapha Sène",
+            latitude = 14.3330,
+            longitude = -16.4000
+        ),
+        Pharmacy(
+            id = "pharm_24b",
+            name = "Pharmacie de Foundiougne Saloum",
+            address = "Quai des Pirogues, Face Bras du Fleuve",
+            district = "Foundiougne Centre",
+            city = "Foundiougne",
+            region = "Fatick",
+            distanceKm = 0.8,
+            isDutyPharmacy = false,
+            rating = 4.7,
+            reviewCount = 48,
+            phoneNumber = "+221 33 949 70 15",
+            openingHours = "08:00 - 22:00",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Aïda Ndong",
+            latitude = 14.1333,
+            longitude = -16.4667
+        ),
+        Pharmacy(
+            id = "pharm_24c",
+            name = "Pharmacie Mame Diarra (Gossas)",
+            address = "Place du Marché, Centre-ville",
+            district = "Gossas Centre",
+            city = "Gossas",
+            region = "Fatick",
+            distanceKm = 0.9,
+            isDutyPharmacy = true,
+            rating = 4.7,
+            reviewCount = 41,
+            phoneNumber = "+221 33 949 50 12",
+            openingHours = "24h/24 - 7j/7",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Cheikh Diop",
+            latitude = 14.4920,
+            longitude = -16.0680
+        ),
+
+        // ==========================================
+        // 7. RÉGION DE KAFFRINE
+        // ==========================================
+        Pharmacy(
+            id = "pharm_27",
+            name = "Pharmacie Centrale du Ndoucoumane (Kaffrine)",
+            address = "Avenue Djaraf Babacar Ndiao, Face Gouvernance",
+            district = "Kaffrine Centre",
+            city = "Kaffrine",
+            region = "Kaffrine",
+            distanceKm = 0.7,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 76,
+            phoneNumber = "+221 33 946 12 10",
+            openingHours = "24h/24 (Pharmacie de garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Ibrahima Wilane",
+            latitude = 14.1060,
+            longitude = -15.5420
+        ),
+        Pharmacy(
+            id = "pharm_27b",
+            name = "Pharmacie du Bambouck (Koungheul)",
+            address = "Route Nationale 1, Quartier Escale",
+            district = "Koungheul Escale",
+            city = "Koungheul",
+            region = "Kaffrine",
+            distanceKm = 1.0,
+            isDutyPharmacy = true,
+            rating = 4.7,
+            reviewCount = 53,
+            phoneNumber = "+221 33 946 70 40",
+            openingHours = "24h/24 - 7j/7",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Ousmane Top",
+            latitude = 13.9830,
+            longitude = -14.8000
+        ),
+        Pharmacy(
+            id = "pharm_27c",
+            name = "Pharmacie de Birkelane Carrefour",
+            address = "Carrefour RN1, Centre-ville",
+            district = "Birkelane Centre",
+            city = "Birkelane",
+            region = "Kaffrine",
+            distanceKm = 0.8,
+            isDutyPharmacy = false,
+            rating = 4.6,
+            reviewCount = 38,
+            phoneNumber = "+221 33 946 55 22",
+            openingHours = "08:00 - 22:00",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Marième Cissé",
+            latitude = 14.1330,
+            longitude = -15.7500
+        ),
+
+        // ==========================================
+        // 8. RÉGION DE LOUGA
+        // ==========================================
+        Pharmacy(
+            id = "pharm_23",
+            name = "Pharmacie Ndiambour Louga (Garde)",
+            address = "Avenue de la République, Face Gouvernance",
+            district = "Louga Centre",
+            city = "Louga",
+            region = "Louga",
+            distanceKm = 0.9,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 84,
+            phoneNumber = "+221 33 967 11 02",
+            openingHours = "24h/24 (Pharmacie de garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Seynabou Diop",
+            latitude = 15.6180,
+            longitude = -16.2240
+        ),
+        Pharmacy(
+            id = "pharm_23b",
+            name = "Pharmacie du Djoloff (Linguère)",
+            address = "Boulevard El Hadji Djily Mbaye",
+            district = "Linguère Centre",
+            city = "Linguère",
+            region = "Louga",
+            distanceKm = 0.8,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 67,
+            phoneNumber = "+221 33 967 50 14",
+            openingHours = "24h/24 - 7j/7",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Maguette Ndiaye",
+            latitude = 15.3950,
+            longitude = -15.1190
+        ),
+        Pharmacy(
+            id = "pharm_23c",
+            name = "Pharmacie Kébémer Escale",
+            address = "Avenue Mame Cheikh Ibra Fall",
+            district = "Kébémer Centre",
+            city = "Kébémer",
+            region = "Louga",
+            distanceKm = 1.0,
+            isDutyPharmacy = false,
+            rating = 4.7,
+            reviewCount = 49,
+            phoneNumber = "+221 33 967 30 18",
+            openingHours = "08:00 - 22:30",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Modou Fall",
+            latitude = 15.3710,
+            longitude = -16.4460
+        ),
+        Pharmacy(
+            id = "pharm_23d",
+            name = "Pharmacie Dahra Djoloff",
+            address = "Carrefour Marché Hebdomadaire, Dahra",
+            district = "Dahra Centre",
+            city = "Dahra",
+            region = "Louga",
+            distanceKm = 1.2,
+            isDutyPharmacy = true,
+            rating = 4.7,
+            reviewCount = 58,
+            phoneNumber = "+221 33 967 60 20",
+            openingHours = "24h/24 (Garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Samba Ka",
+            latitude = 15.3480,
+            longitude = -15.4780
+        ),
+
+        // ==========================================
+        // 9. RÉGION DE MATAM
+        // ==========================================
+        Pharmacy(
+            id = "pharm_25",
+            name = "Pharmacie du Fouta Matam (Garde)",
+            address = "Quartier Soubalo, Bord du Fleuve Sénégal",
+            district = "Matam Escale",
+            city = "Matam",
+            region = "Matam",
+            distanceKm = 1.3,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 68,
+            phoneNumber = "+221 33 966 12 50",
+            openingHours = "24h/24 (Garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Harouna Ly",
+            latitude = 15.6550,
+            longitude = -13.2550
+        ),
+        Pharmacy(
+            id = "pharm_25b",
+            name = "Grande Pharmacie du Carrefour Ourossogui",
+            address = "Carrefour RN2 x Route de Matam",
+            district = "Ourossogui Centre",
+            city = "Ourossogui",
+            region = "Matam",
+            distanceKm = 0.7,
+            isDutyPharmacy = true,
+            rating = 4.9,
+            reviewCount = 110,
+            phoneNumber = "+221 33 966 20 15",
+            openingHours = "24h/24 - 7j/7 (Permanence 24h)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Aboubacry Sy",
+            latitude = 15.6050,
+            longitude = -13.3180
+        ),
+        Pharmacy(
+            id = "pharm_25c",
+            name = "Pharmacie Kanel Escale",
+            address = "Face Préfecture, Route Nationale 2",
+            district = "Kanel Centre",
+            city = "Kanel",
+            region = "Matam",
+            distanceKm = 1.0,
+            isDutyPharmacy = false,
+            rating = 4.6,
+            reviewCount = 39,
+            phoneNumber = "+221 33 966 40 10",
+            openingHours = "08:00 - 22:00",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Mamadou Kane",
+            latitude = 15.4830,
+            longitude = -13.1760
+        ),
+
+        // ==========================================
+        // 10. RÉGION DE ZIGUINCHOR
+        // ==========================================
         Pharmacy(
             id = "pharm_19",
             name = "Pharmacie de la Casamance (Escale)",
@@ -472,127 +1210,321 @@ object InitialData {
             latitude = 12.5550,
             longitude = -16.2680
         ),
-
-        // === AUTRES RÉGIONS (TAMBACOUNDA, KOLDA, LOUGA, FATICK, MATAM, KÉDOUGOU) ===
         Pharmacy(
-            id = "pharm_21",
-            name = "Pharmacie du Chemin de Fer Tamba",
-            address = "Avenue Kéba Mbaye, Quartier Liberté",
-            district = "Tambacounda Centre",
-            city = "Tambacounda",
-            region = "Autres Régions",
+            id = "pharm_20b",
+            name = "Pharmacie Balnéaire du Cap Skirring",
+            address = "Route Touristique des Hôtels, Face Plage",
+            district = "Cap Skirring",
+            city = "Cap Skirring",
+            region = "Ziguinchor",
             distanceKm = 1.0,
             isDutyPharmacy = true,
-            rating = 4.8,
-            reviewCount = 98,
-            phoneNumber = "+221 33 981 12 11",
-            openingHours = "24h/24 (Garde)",
+            rating = 4.9,
+            reviewCount = 142,
+            phoneNumber = "+221 33 993 51 10",
+            openingHours = "24h/24 - 7j/7",
             isCertified = true,
-            estimatedDeliveryMinutes = 25,
-            deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Moussa Cissokho",
-            latitude = 13.7710,
-            longitude = -13.6770
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1200,
+            pharmacistInCharge = "Dr. Pierre Gomis",
+            latitude = 12.3550,
+            longitude = -16.7450
         ),
         Pharmacy(
-            id = "pharm_22",
-            name = "Pharmacie du Fouladou Kolda",
-            address = "Boulevard des Martyrs, Quartier Sikilo",
-            district = "Kolda Centre",
-            city = "Kolda",
-            region = "Autres Régions",
-            distanceKm = 1.2,
+            id = "pharm_20c",
+            name = "Pharmacie du Fogny (Bignona)",
+            address = "Avenue Emile Badiane, Centre-ville",
+            district = "Bignona Centre",
+            city = "Bignona",
+            region = "Ziguinchor",
+            distanceKm = 0.9,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 88,
+            phoneNumber = "+221 33 994 11 20",
+            openingHours = "24h/24 (Garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Lansana Coly",
+            latitude = 12.8110,
+            longitude = -16.2300
+        ),
+
+        // ==========================================
+        // 11. RÉGION DE SÉDHIOU
+        // ==========================================
+        Pharmacy(
+            id = "pharm_28",
+            name = "Pharmacie Centrale du Pakao (Sédhiou)",
+            address = "Avenue Bacary Sonko, Face Hôpital Régional",
+            district = "Sédhiou Centre",
+            city = "Sédhiou",
+            region = "Sédhiou",
+            distanceKm = 0.6,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 64,
+            phoneNumber = "+221 33 995 10 15",
+            openingHours = "24h/24 (Pharmacie de garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Landing Cissé",
+            latitude = 12.7080,
+            longitude = -15.5560
+        ),
+        Pharmacy(
+            id = "pharm_28b",
+            name = "Pharmacie de Bounkiling Escale",
+            address = "Route Nationale 4 (Transgambienne)",
+            district = "Bounkiling Centre",
+            city = "Bounkiling",
+            region = "Sédhiou",
+            distanceKm = 0.8,
             isDutyPharmacy = true,
             rating = 4.7,
-            reviewCount = 65,
-            phoneNumber = "+221 33 996 15 20",
+            reviewCount = 46,
+            phoneNumber = "+221 33 995 30 20",
             openingHours = "24h/24 - 7j/7",
             isCertified = true,
             estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Yaya Sonko",
+            latitude = 13.0450,
+            longitude = -15.7020
+        ),
+        Pharmacy(
+            id = "pharm_28c",
+            name = "Pharmacie du Balantacounda (Goudomp)",
+            address = "Quai du Fleuve Casamance, Goudomp Escale",
+            district = "Goudomp Centre",
+            city = "Goudomp",
+            region = "Sédhiou",
+            distanceKm = 0.9,
+            isDutyPharmacy = false,
+            rating = 4.6,
+            reviewCount = 37,
+            phoneNumber = "+221 33 995 40 10",
+            openingHours = "08:00 - 22:00",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Ansoumana Mané",
+            latitude = 12.5780,
+            longitude = -15.8710
+        ),
+
+        // ==========================================
+        // 12. RÉGION DE KOLDA
+        // ==========================================
+        Pharmacy(
+            id = "pharm_22",
+            name = "Pharmacie du Fouladou Kolda (Garde)",
+            address = "Boulevard des Martyrs, Quartier Sikilo",
+            district = "Kolda Centre",
+            city = "Kolda",
+            region = "Kolda",
+            distanceKm = 1.2,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 85,
+            phoneNumber = "+221 33 996 15 20",
+            openingHours = "24h/24 - 7j/7 (Permanence 24h)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
             pharmacistInCharge = "Dr. Oumar Baldé",
             latitude = 12.8830,
             longitude = -14.9500
         ),
         Pharmacy(
-            id = "pharm_23",
-            name = "Pharmacie Ndiambour Louga",
-            address = "Avenue de la République, Face Gouvernance",
-            district = "Louga Centre",
-            city = "Louga",
-            region = "Autres Régions",
-            distanceKm = 0.9,
+            id = "pharm_22b",
+            name = "Pharmacie du Grand Carrefour (Vélingara)",
+            address = "Boulevard Thierno Mansour, Face Gare Routière",
+            district = "Vélingara Centre",
+            city = "Vélingara",
+            region = "Kolda",
+            distanceKm = 0.8,
             isDutyPharmacy = true,
             rating = 4.8,
-            reviewCount = 84,
-            phoneNumber = "+221 33 967 11 02",
+            reviewCount = 74,
+            phoneNumber = "+221 33 997 10 30",
+            openingHours = "24h/24 (Garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Habibou Diallo",
+            latitude = 13.1500,
+            longitude = -14.1167
+        ),
+        Pharmacy(
+            id = "pharm_22c",
+            name = "Pharmacie Doumassou Santé (Kolda)",
+            address = "Avenue de l'Indépendance, Doumassou",
+            district = "Doumassou",
+            city = "Kolda",
+            region = "Kolda",
+            distanceKm = 1.5,
+            isDutyPharmacy = false,
+            rating = 4.6,
+            reviewCount = 52,
+            phoneNumber = "+221 33 996 22 18",
+            openingHours = "08:00 - 22:30",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Aïssatou Sabaly",
+            latitude = 12.8750,
+            longitude = -14.9620
+        ),
+
+        // ==========================================
+        // 13. RÉGION DE TAMBACOUNDA
+        // ==========================================
+        Pharmacy(
+            id = "pharm_21",
+            name = "Pharmacie du Chemin de Fer Tamba (Garde)",
+            address = "Avenue Kéba Mbaye, Face Gare Ferroviaire",
+            district = "Tambacounda Centre",
+            city = "Tambacounda",
+            region = "Tambacounda",
+            distanceKm = 1.0,
+            isDutyPharmacy = true,
+            rating = 4.9,
+            reviewCount = 118,
+            phoneNumber = "+221 33 981 12 11",
             openingHours = "24h/24 (Pharmacie de garde)",
             isCertified = true,
             estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Seynabou Diop",
-            latitude = 15.6180,
-            longitude = -16.2240
+            pharmacistInCharge = "Dr. Moussa Cissokho",
+            latitude = 13.7710,
+            longitude = -13.6770
         ),
         Pharmacy(
-            id = "pharm_24",
-            name = "Pharmacie du Sine Fatick",
-            address = "Route Nationale 1, Fatick Escale",
-            district = "Fatick Escale",
-            city = "Fatick",
-            region = "Autres Régions",
-            distanceKm = 1.1,
+            id = "pharm_21b",
+            name = "Pharmacie Liberté Tambacounda",
+            address = "Quartier Liberté, Route de Kédougou",
+            district = "Liberté / Abattoirs",
+            city = "Tambacounda",
+            region = "Tambacounda",
+            distanceKm = 1.8,
+            isDutyPharmacy = false,
+            rating = 4.7,
+            reviewCount = 63,
+            phoneNumber = "+221 33 981 25 40",
+            openingHours = "08:00 - 22:30",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Coumba Bâ",
+            latitude = 13.7620,
+            longitude = -13.6650
+        ),
+        Pharmacy(
+            id = "pharm_21c",
+            name = "Grande Pharmacie du Galam (Bakel)",
+            address = "Quai du Fleuve Sénégal, Bakel Escale",
+            district = "Bakel Escale",
+            city = "Bakel",
+            region = "Tambacounda",
+            distanceKm = 0.9,
+            isDutyPharmacy = true,
+            rating = 4.8,
+            reviewCount = 59,
+            phoneNumber = "+221 33 982 10 18",
+            openingHours = "24h/24 (Garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 20,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Demba Wagué",
+            latitude = 14.9030,
+            longitude = -12.4640
+        ),
+        Pharmacy(
+            id = "pharm_21d",
+            name = "Pharmacie du Niani (Koumpentoum)",
+            address = "Route Nationale 1, Koumpentoum",
+            district = "Koumpentoum Centre",
+            city = "Koumpentoum",
+            region = "Tambacounda",
+            distanceKm = 0.7,
             isDutyPharmacy = false,
             rating = 4.6,
-            reviewCount = 52,
-            phoneNumber = "+221 33 949 10 33",
+            reviewCount = 42,
+            phoneNumber = "+221 33 983 15 20",
             openingHours = "08:00 - 22:00",
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Moustapha Sène",
-            latitude = 14.3330,
-            longitude = -16.4000
+            pharmacistInCharge = "Dr. Aly Traoré",
+            latitude = 13.9830,
+            longitude = -14.5670
         ),
-        Pharmacy(
-            id = "pharm_25",
-            name = "Pharmacie du Fouta Matam",
-            address = "Quartier Soubalo, Bord du Fleuve Sénégal",
-            district = "Matam Escale",
-            city = "Matam",
-            region = "Autres Régions",
-            distanceKm = 1.3,
-            isDutyPharmacy = true,
-            rating = 4.7,
-            reviewCount = 60,
-            phoneNumber = "+221 33 966 12 50",
-            openingHours = "24h/24 (Garde)",
-            isCertified = true,
-            estimatedDeliveryMinutes = 30,
-            deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Harouna Ly",
-            latitude = 15.6550,
-            longitude = -13.2550
-        ),
+
+        // ==========================================
+        // 14. RÉGION DE KÉDOUGOU
+        // ==========================================
         Pharmacy(
             id = "pharm_26",
-            name = "Grande Pharmacie du Pays Bassari Kédougou",
+            name = "Grande Pharmacie du Pays Bassari (Kédougou)",
             address = "Avenue Mamba Guirassy, Centre-ville",
             district = "Kédougou Centre",
             city = "Kédougou",
-            region = "Autres Régions",
-            distanceKm = 1.0,
+            region = "Kédougou",
+            distanceKm = 0.8,
             isDutyPharmacy = true,
-            rating = 4.8,
-            reviewCount = 45,
+            rating = 4.9,
+            reviewCount = 75,
             phoneNumber = "+221 33 985 10 15",
-            openingHours = "24h/24 - 7j/7",
+            openingHours = "24h/24 - 7j/7 (Permanence de garde)",
             isCertified = true,
-            estimatedDeliveryMinutes = 25,
+            estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
             pharmacistInCharge = "Dr. Mamadou Diallo",
             latitude = 12.5570,
             longitude = -12.1760
+        ),
+        Pharmacy(
+            id = "pharm_26b",
+            name = "Pharmacie Minière de Saraya",
+            address = "Avenue Principale, Route de Mako",
+            district = "Saraya Centre",
+            city = "Saraya",
+            region = "Kédougou",
+            distanceKm = 0.9,
+            isDutyPharmacy = true,
+            rating = 4.7,
+            reviewCount = 46,
+            phoneNumber = "+221 33 985 30 10",
+            openingHours = "24h/24 (Garde)",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Boubacar Danfakha",
+            latitude = 12.8330,
+            longitude = -11.7500
+        ),
+        Pharmacy(
+            id = "pharm_26c",
+            name = "Pharmacie Bédik de Salémata",
+            address = "Face Préfecture, Route des Collines",
+            district = "Salémata Centre",
+            city = "Salémata",
+            region = "Kédougou",
+            distanceKm = 1.0,
+            isDutyPharmacy = false,
+            rating = 4.6,
+            reviewCount = 31,
+            phoneNumber = "+221 33 985 40 22",
+            openingHours = "08:00 - 22:00",
+            isCertified = true,
+            estimatedDeliveryMinutes = 25,
+            deliveryFeeFcfa = 1000,
+            pharmacistInCharge = "Dr. Aïssatou Samoura",
+            latitude = 12.6330,
+            longitude = -12.8170
         )
     )
 

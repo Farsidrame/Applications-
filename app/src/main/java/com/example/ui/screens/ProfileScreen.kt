@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -43,6 +45,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Shield
@@ -57,6 +60,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -99,6 +104,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.local.InitialData
 import com.example.data.model.DeliveryAddressEntity
 import com.example.data.model.UserProfileEntity
 import com.example.ui.theme.DutyPharmacyBg
@@ -1118,48 +1124,32 @@ private fun AddressEditDialog(
         isDefault: Boolean
     ) -> Unit
 ) {
-    var title by remember { mutableStateOf(address?.title ?: "Domicile") }
+    var region by remember { mutableStateOf(address?.region ?: "Dakar") }
+    var city by remember { mutableStateOf(address?.city ?: (InitialData.senegalAdministrativeData[region]?.capital ?: "Dakar")) }
+    var neighborhood by remember { mutableStateOf(address?.neighborhood ?: (InitialData.senegalAdministrativeData[region]?.popularNeighborhoods?.firstOrNull() ?: "Centre-ville")) }
+    var title by remember { mutableStateOf(address?.title ?: "Domicile ($region)") }
     var recipient by remember { mutableStateOf(address?.recipientName ?: "Mamadou Dramé") }
     var phone by remember { mutableStateOf(address?.contactPhone ?: "+221 77 654 32 10") }
     var fullAddress by remember { mutableStateOf(address?.fullAddress ?: "") }
-    var neighborhood by remember { mutableStateOf(address?.neighborhood ?: "Sacré-Cœur / Keur Gorgui") }
-    var city by remember { mutableStateOf(address?.city ?: "Dakar") }
-    var region by remember { mutableStateOf(address?.region ?: "Dakar") }
     var instructions by remember { mutableStateOf(address?.courierInstructions ?: "") }
     var isDefault by remember { mutableStateOf(address?.isDefault ?: false) }
 
-    val popularNeighborhoods = listOf(
-        "Sacré-Cœur / Keur Gorgui",
-        "Plateau / Centre-ville",
-        "Mermoz",
-        "Almadies",
-        "Ngor",
-        "Ouakam",
-        "Fann Résidence / Point E",
-        "Maristes / Hann",
-        "Yoff",
-        "Liberté 6 / SICAP",
-        "Grand Dakar",
-        "Pikine",
-        "Guédiawaye",
-        "Rufisque",
-        "Thiès Centre",
-        "Touba Mosquée",
-        "Saint-Louis Île"
-    )
-
-    val popularCities = listOf("Dakar", "Thiès", "Saint-Louis", "Touba", "Mbour", "Kaolack", "Ziguinchor")
-
-    var neighborhoodDropdownExpanded by remember { mutableStateOf(false) }
+    var regionDropdownExpanded by remember { mutableStateOf(false) }
     var cityDropdownExpanded by remember { mutableStateOf(false) }
+    var neighborhoodDropdownExpanded by remember { mutableStateOf(false) }
+
+    val currentRegionInfo = InitialData.senegalAdministrativeData[region]
+    val popularCitiesForRegion = currentRegionInfo?.popularCities ?: listOf("Dakar", "Thiès", "Saint-Louis", "Touba", "Kaolack", "Ziguinchor")
+    val popularNeighborhoodsForRegion = currentRegionInfo?.popularNeighborhoods ?: listOf("Centre-ville", "Escale", "Marché Central")
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .padding(vertical = 12.dp)
                 .testTag("dialog_address_form")
         ) {
             Column(
@@ -1167,18 +1157,33 @@ private fun AddressEditDialog(
                     .padding(20.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Title
+                // Title & Senegal flag header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = if (address == null) "Nouvelle Adresse" else "Modifier l'Adresse",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimaryDark
-                    )
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "🇸🇳",
+                                fontSize = 20.sp
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (address == null) "Nouvelle Adresse de Livraison" else "Modifier l'Adresse",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimaryDark
+                            )
+                        }
+                        Text(
+                            text = "Couverture nationale des 14 régions du Sénégal",
+                            fontSize = 11.sp,
+                            color = MedicalTealDark,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                     IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
                         Icon(Icons.Default.Close, contentDescription = "Fermer")
                     }
@@ -1186,71 +1191,155 @@ private fun AddressEditDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Title label
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Nom de l'adresse (ex: Domicile, Bureau, Famille)") },
-                    modifier = Modifier.fillMaxWidth().testTag("input_addr_title"),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MedicalTealPrimary,
-                        unfocusedBorderColor = Color(0xFFCCCCCC)
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    singleLine = true
+                // Section 1: Region Selection (All 14 regions of Senegal)
+                Text(
+                    text = "1. Choisissez la région du Sénégal",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimaryDark
                 )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Region horizontal quick chips
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(InitialData.senegalRegionsList) { reg ->
+                        val isSelected = reg == region
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                region = reg
+                                val info = InitialData.senegalAdministrativeData[reg]
+                                if (info != null) {
+                                    city = info.capital
+                                    neighborhood = info.popularNeighborhoods.firstOrNull() ?: info.capital
+                                }
+                            },
+                            label = {
+                                Text(
+                                    text = reg,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MedicalTealPrimary,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Region Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = regionDropdownExpanded,
+                    onExpandedChange = { regionDropdownExpanded = !regionDropdownExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = "Région : $region",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Région administrative (14 régions)") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Explore, contentDescription = null, tint = MedicalTealPrimary)
+                        },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = regionDropdownExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .testTag("input_addr_region_select"),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MedicalTealPrimary,
+                            unfocusedBorderColor = Color(0xFFCCCCCC)
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    ExposedDropdownMenu(
+                        expanded = regionDropdownExpanded,
+                        onDismissRequest = { regionDropdownExpanded = false }
+                    ) {
+                        InitialData.senegalRegionsList.forEach { reg ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(reg, fontWeight = if (reg == region) FontWeight.Bold else FontWeight.Normal)
+                                        if (reg == region) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(16.dp))
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    region = reg
+                                    val info = InitialData.senegalAdministrativeData[reg]
+                                    if (info != null) {
+                                        city = info.capital
+                                        neighborhood = info.popularNeighborhoods.firstOrNull() ?: info.capital
+                                    }
+                                    regionDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Section 2: City & Neighborhood in Region
+                Text(
+                    text = "2. Ville / Département & Quartier ($region)",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimaryDark
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // City Dropdown / Field
+                ExposedDropdownMenuBox(
+                    expanded = cityDropdownExpanded,
+                    onExpandedChange = { cityDropdownExpanded = !cityDropdownExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = city,
+                        onValueChange = { city = it },
+                        label = { Text("Ville ou Département ($region)") },
+                        leadingIcon = {
+                            Icon(Icons.Default.LocationCity, contentDescription = null, tint = MedicalTealPrimary)
+                        },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cityDropdownExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .testTag("input_addr_city"),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MedicalTealPrimary,
+                            unfocusedBorderColor = Color(0xFFCCCCCC)
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    ExposedDropdownMenu(
+                        expanded = cityDropdownExpanded,
+                        onDismissRequest = { cityDropdownExpanded = false }
+                    ) {
+                        popularCitiesForRegion.forEach { c ->
+                            DropdownMenuItem(
+                                text = { Text(c) },
+                                onClick = {
+                                    city = c
+                                    cityDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Recipient
-                OutlinedTextField(
-                    value = recipient,
-                    onValueChange = { recipient = it },
-                    label = { Text("Nom du destinataire") },
-                    modifier = Modifier.fillMaxWidth().testTag("input_addr_recipient"),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MedicalTealPrimary,
-                        unfocusedBorderColor = Color(0xFFCCCCCC)
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Phone
-                OutlinedTextField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    label = { Text("Téléphone pour le coursier") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    modifier = Modifier.fillMaxWidth().testTag("input_addr_phone"),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MedicalTealPrimary,
-                        unfocusedBorderColor = Color(0xFFCCCCCC)
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Full Address
-                OutlinedTextField(
-                    value = fullAddress,
-                    onValueChange = { fullAddress = it },
-                    label = { Text("Adresse détaillée (Rue, Résidence, Bâtiment, Porte)") },
-                    modifier = Modifier.fillMaxWidth().testTag("input_addr_full"),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MedicalTealPrimary,
-                        unfocusedBorderColor = Color(0xFFCCCCCC)
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Neighborhood Dropdown
+                // Neighborhood Dropdown / Field
                 ExposedDropdownMenuBox(
                     expanded = neighborhoodDropdownExpanded,
                     onExpandedChange = { neighborhoodDropdownExpanded = !neighborhoodDropdownExpanded }
@@ -1258,7 +1347,10 @@ private fun AddressEditDialog(
                     OutlinedTextField(
                         value = neighborhood,
                         onValueChange = { neighborhood = it },
-                        label = { Text("Quartier") },
+                        label = { Text("Quartier ou Localité") },
+                        leadingIcon = {
+                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = MedicalTealPrimary)
+                        },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = neighborhoodDropdownExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1268,13 +1360,13 @@ private fun AddressEditDialog(
                             focusedBorderColor = MedicalTealPrimary,
                             unfocusedBorderColor = Color(0xFFCCCCCC)
                         ),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(10.dp)
                     )
                     ExposedDropdownMenu(
                         expanded = neighborhoodDropdownExpanded,
                         onDismissRequest = { neighborhoodDropdownExpanded = false }
                     ) {
-                        popularNeighborhoods.forEach { neigh ->
+                        popularNeighborhoodsForRegion.forEach { neigh ->
                             DropdownMenuItem(
                                 text = { Text(neigh) },
                                 onClick = {
@@ -1286,47 +1378,88 @@ private fun AddressEditDialog(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Section 3: Exact Address & Contacts
+                Text(
+                    text = "3. Coordonnées & Précisions",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimaryDark
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Address label name
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Nom de l'adresse (ex: Domicile, Bureau, Famille)") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Home, contentDescription = null, tint = MedicalTealPrimary)
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("input_addr_title"),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MedicalTealPrimary,
+                        unfocusedBorderColor = Color(0xFFCCCCCC)
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // City Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = cityDropdownExpanded,
-                    onExpandedChange = { cityDropdownExpanded = !cityDropdownExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = city,
-                        onValueChange = {
-                            city = it
-                            region = it
-                        },
-                        label = { Text("Ville / Région") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cityDropdownExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                            .testTag("input_addr_city"),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MedicalTealPrimary,
-                            unfocusedBorderColor = Color(0xFFCCCCCC)
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    ExposedDropdownMenu(
-                        expanded = cityDropdownExpanded,
-                        onDismissRequest = { cityDropdownExpanded = false }
-                    ) {
-                        popularCities.forEach { c ->
-                            DropdownMenuItem(
-                                text = { Text(c) },
-                                onClick = {
-                                    city = c
-                                    region = c
-                                    cityDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                // Recipient
+                OutlinedTextField(
+                    value = recipient,
+                    onValueChange = { recipient = it },
+                    label = { Text("Nom du destinataire") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = null, tint = MedicalTealPrimary)
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("input_addr_recipient"),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MedicalTealPrimary,
+                        unfocusedBorderColor = Color(0xFFCCCCCC)
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Phone
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("Téléphone pour le coursier") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Phone, contentDescription = null, tint = MedicalTealPrimary)
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    modifier = Modifier.fillMaxWidth().testTag("input_addr_phone"),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MedicalTealPrimary,
+                        unfocusedBorderColor = Color(0xFFCCCCCC)
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Full Address
+                OutlinedTextField(
+                    value = fullAddress,
+                    onValueChange = { fullAddress = it },
+                    label = { Text("Adresse détaillée (Rue, Bâtiment, Villa N°, Repère)") },
+                    placeholder = { Text("Ex: Villa N° 45, près de la pharmacie") },
+                    modifier = Modifier.fillMaxWidth().testTag("input_addr_full"),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MedicalTealPrimary,
+                        unfocusedBorderColor = Color(0xFFCCCCCC)
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -1334,13 +1467,13 @@ private fun AddressEditDialog(
                 OutlinedTextField(
                     value = instructions,
                     onValueChange = { instructions = it },
-                    label = { Text("Instructions coursier (ex: 2ème étage, interphone 42)") },
+                    label = { Text("Instructions coursier (ex: 2ème étage, appeler à la grille)") },
                     modifier = Modifier.fillMaxWidth().testTag("input_addr_instructions"),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MedicalTealPrimary,
                         unfocusedBorderColor = Color(0xFFCCCCCC)
                     ),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(10.dp),
                     minLines = 2
                 )
 
@@ -1350,7 +1483,7 @@ private fun AddressEditDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(Color(0xFFF9F9F9))
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1364,7 +1497,7 @@ private fun AddressEditDialog(
                             color = TextPrimaryDark
                         )
                         Text(
-                            text = "Utilisée par défaut lors du paiement",
+                            text = "Utilisée par défaut pour les livraisons",
                             fontSize = 11.sp,
                             color = TextSecondaryMuted
                         )
@@ -1393,14 +1526,16 @@ private fun AddressEditDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if (fullAddress.isBlank()) {
-                                fullAddress = "$neighborhood, $city"
+                            val computedFullAddress = if (fullAddress.isBlank()) {
+                                "$neighborhood, $city ($region)"
+                            } else {
+                                fullAddress
                             }
                             onSave(
                                 title,
                                 recipient,
                                 phone,
-                                fullAddress,
+                                computedFullAddress,
                                 neighborhood,
                                 city,
                                 region,
@@ -1409,10 +1544,10 @@ private fun AddressEditDialog(
                             )
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.testTag("btn_save_addr_dialog")
                     ) {
-                        Text("Enregistrer", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("Enregistrer l'Adresse", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }

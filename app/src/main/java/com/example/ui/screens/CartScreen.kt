@@ -1,7 +1,9 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,20 +17,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.HealthAndSafety
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Medication
@@ -40,6 +47,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +62,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -90,10 +104,15 @@ fun CartScreen(
     val isPrescriptionAttached by viewModel.isPrescriptionAttachedToCart.collectAsStateWithLifecycle()
     val attachedPrescriptionSummary by viewModel.attachedPrescriptionSummary.collectAsStateWithLifecycle()
     val userAddress by viewModel.userDeliveryAddress.collectAsStateWithLifecycle()
+    val savedAddresses by viewModel.deliveryAddresses.collectAsStateWithLifecycle()
 
     var showPrescriptionDialog by remember { mutableStateOf(false) }
     var isEditingAddress by remember { mutableStateOf(false) }
     var addressInput by remember { mutableStateOf(userAddress) }
+    var selectedRegion by remember { mutableStateOf("Dakar") }
+    var selectedCity by remember { mutableStateOf("Dakar") }
+    var selectedNeighborhood by remember { mutableStateOf("Sacré-Cœur / Keur Gorgui") }
+    var regionDropdownExpanded by remember { mutableStateOf(false) }
 
     val subtotal = cartItems.sumOf { it.priceFcfa * it.quantity }
     val defaultPharmacy = InitialData.pharmacies.first()
@@ -324,7 +343,7 @@ fun CartScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
@@ -334,56 +353,249 @@ fun CartScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.LocationOn,
-                                        contentDescription = null,
-                                        tint = MedicalTealPrimary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                    Text(text = "🇸🇳", fontSize = 16.sp)
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "Adresse de livraison",
+                                        text = "Adresse de livraison (Sénégal)",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp,
                                         color = TextPrimaryDark
                                     )
                                 }
 
-                                IconButton(
+                                TextButton(
                                     onClick = { isEditingAddress = !isEditingAddress },
-                                    modifier = Modifier.size(28.dp)
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Modifier", tint = MedicalTealPrimary, modifier = Modifier.size(16.dp))
+                                    Icon(
+                                        if (isEditingAddress) Icons.Default.Close else Icons.Default.Edit,
+                                        contentDescription = null,
+                                        tint = MedicalTealPrimary,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = if (isEditingAddress) "Fermer" else "Changer / Région",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MedicalTealPrimary
+                                    )
                                 }
                             }
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            if (isEditingAddress) {
-                                OutlinedTextField(
-                                    value = addressInput,
-                                    onValueChange = { addressInput = it },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MedicalTealPrimary),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Button(
-                                    onClick = {
-                                        viewModel.userDeliveryAddress.value = addressInput
-                                        isEditingAddress = false
-                                    },
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary)
+                            // Display current address
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color(0xFFF7FAF9),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("Enregistrer l'adresse", fontSize = 12.sp)
+                                    Icon(
+                                        imageVector = Icons.Default.LocationOn,
+                                        contentDescription = null,
+                                        tint = MedicalTealPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = userAddress,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = TextPrimaryDark
+                                        )
+                                        Text(
+                                            text = "Livraison express disponible sur l'ensemble des 14 régions du Sénégal",
+                                            fontSize = 10.sp,
+                                            color = MedicalTealDark
+                                        )
+                                    }
                                 }
-                            } else {
+                            }
+
+                            // Quick saved addresses chips
+                            if (savedAddresses.size > 1) {
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = userAddress,
-                                    fontSize = 12.sp,
+                                    text = "Adresses enregistrées :",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = TextSecondaryMuted
                                 )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    items(savedAddresses) { addr ->
+                                        val isCurrent = userAddress.contains(addr.neighborhood) || userAddress == addr.fullAddress
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = if (isCurrent) MedicalTealLight else Color(0xFFF1F1F1),
+                                            border = if (isCurrent) androidx.compose.foundation.BorderStroke(1.dp, MedicalTealPrimary) else null,
+                                            modifier = Modifier.clickable {
+                                                viewModel.userDeliveryAddress.value = "${addr.fullAddress}, ${addr.neighborhood}, ${addr.city} (${addr.region})"
+                                                addressInput = "${addr.fullAddress}, ${addr.neighborhood}, ${addr.city} (${addr.region})"
+                                            }
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    if (isCurrent) Icons.Default.CheckCircle else Icons.Default.Home,
+                                                    contentDescription = null,
+                                                    tint = if (isCurrent) MedicalTealPrimary else TextSecondaryMuted,
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = "${addr.title} (${addr.region})",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (isCurrent) MedicalTealDark else TextPrimaryDark
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Expandable Editor with 14 Senegal regions
+                            AnimatedVisibility(visible = isEditingAddress) {
+                                Column(modifier = Modifier.padding(top = 10.dp)) {
+                                    HorizontalDivider(color = Color(0xFFEEEEEE))
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "1. Sélectionner une région du Sénégal :",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimaryDark
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    // 14 regions chips
+                                    LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        items(InitialData.senegalRegionsList) { reg ->
+                                            val isSel = reg == selectedRegion
+                                            FilterChip(
+                                                selected = isSel,
+                                                onClick = {
+                                                    selectedRegion = reg
+                                                    val info = InitialData.senegalAdministrativeData[reg]
+                                                    if (info != null) {
+                                                        selectedCity = info.capital
+                                                        selectedNeighborhood = info.popularNeighborhoods.firstOrNull() ?: info.capital
+                                                        addressInput = "$selectedNeighborhood, $selectedCity ($selectedRegion)"
+                                                    }
+                                                },
+                                                label = { Text(reg, fontSize = 11.sp) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = MedicalTealPrimary,
+                                                    selectedLabelColor = Color.White
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Pre-set City & Neighborhood pills for chosen region
+                                    val regionInfo = InitialData.senegalAdministrativeData[selectedRegion]
+                                    if (regionInfo != null) {
+                                        Text(
+                                            text = "Villes & Quartiers de $selectedRegion :",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = TextSecondaryMuted
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        LazyRow(
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            items(regionInfo.popularCities) { c ->
+                                                Surface(
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    color = if (c == selectedCity) MedicalTealLight else Color(0xFFF3F3F3),
+                                                    modifier = Modifier.clickable {
+                                                        selectedCity = c
+                                                        addressInput = "$selectedNeighborhood, $selectedCity ($selectedRegion)"
+                                                    }
+                                                ) {
+                                                    Text(
+                                                        text = c,
+                                                        fontSize = 10.sp,
+                                                        fontWeight = if (c == selectedCity) FontWeight.Bold else FontWeight.Normal,
+                                                        color = if (c == selectedCity) MedicalTealDark else TextPrimaryDark,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        LazyRow(
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            items(regionInfo.popularNeighborhoods) { neigh ->
+                                                Surface(
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    color = if (neigh == selectedNeighborhood) MedicalTealLight else Color(0xFFF3F3F3),
+                                                    modifier = Modifier.clickable {
+                                                        selectedNeighborhood = neigh
+                                                        addressInput = "$selectedNeighborhood, $selectedCity ($selectedRegion)"
+                                                    }
+                                                ) {
+                                                    Text(
+                                                        text = neigh,
+                                                        fontSize = 10.sp,
+                                                        fontWeight = if (neigh == selectedNeighborhood) FontWeight.Bold else FontWeight.Normal,
+                                                        color = if (neigh == selectedNeighborhood) MedicalTealDark else TextPrimaryDark,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Full address input
+                                    OutlinedTextField(
+                                        value = addressInput,
+                                        onValueChange = { addressInput = it },
+                                        label = { Text("Adresse complète de livraison") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MedicalTealPrimary),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Button(
+                                        onClick = {
+                                            if (addressInput.isNotBlank()) {
+                                                viewModel.userDeliveryAddress.value = addressInput
+                                            }
+                                            isEditingAddress = false
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Appliquer cette adresse de livraison", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
                             }
                         }
                     }
