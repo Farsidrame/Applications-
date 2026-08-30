@@ -51,6 +51,8 @@ import com.example.data.model.Medicine
 import com.example.data.model.OrderEntity
 import com.example.data.model.Pharmacy
 import com.example.data.repository.PharmaRepository
+import com.example.ui.components.SmsDeliveryAlertDialog
+import com.example.ui.components.SmsInboxBottomSheet
 import com.example.ui.screens.CartScreen
 import com.example.ui.screens.CatalogScreen
 import com.example.ui.screens.CheckoutPaymentScreen
@@ -105,6 +107,10 @@ fun PharmaApp(viewModel: PharmaViewModel) {
 
     val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
     val orders by viewModel.orders.collectAsStateWithLifecycle()
+    val showSmsAlert by viewModel.showSmsAlertDialog.collectAsStateWithLifecycle()
+    val latestSms by viewModel.latestDeliveredSmsAlert.collectAsStateWithLifecycle()
+    val smsList by viewModel.smsNotifications.collectAsStateWithLifecycle()
+    val showSmsInbox by viewModel.showSmsInboxSheet.collectAsStateWithLifecycle()
     val cartCount = cartItems.sumOf { it.quantity }
 
     val bottomNavScreens = listOf(
@@ -287,6 +293,29 @@ fun PharmaApp(viewModel: PharmaViewModel) {
                     }
                 }
             }
+        }
+
+        // Global Real-Time Delivery SMS Alert Dialog
+        if (showSmsAlert && latestSms != null) {
+            SmsDeliveryAlertDialog(
+                sms = latestSms!!,
+                onDismiss = { viewModel.dismissSmsAlert() },
+                onViewOrder = {
+                    val targetOrder = orders.find { it.id == latestSms!!.orderId }
+                    if (targetOrder != null) {
+                        trackingOrder = targetOrder
+                        currentScreen = Screen.TRACKING
+                    }
+                }
+            )
+        }
+
+        // Global SMS Inbox Bottom Sheet
+        if (showSmsInbox) {
+            SmsInboxBottomSheet(
+                smsList = smsList,
+                onDismiss = { viewModel.closeSmsInbox() }
+            )
         }
     }
 }

@@ -15,8 +15,11 @@ import com.example.data.model.OrderEntity
 import com.example.data.model.OrderStatus
 import com.example.data.model.PaymentMethod
 import com.example.data.model.Pharmacy
+import com.example.data.model.PharmacySortOption
 import com.example.data.model.PrescriptionEntity
 import com.example.data.model.ReminderEntity
+import com.example.data.model.SmsDeliveryNotification
+import com.example.data.model.UserGpsLocation
 import com.example.data.model.UserProfileEntity
 import com.example.data.repository.PharmaRepository
 import kotlinx.coroutines.Job
@@ -32,6 +35,14 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.math.sqrt
+
+data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 sealed interface PaymentProcessState {
     object Idle : PaymentProcessState
@@ -64,6 +75,40 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
     private val _dutyOnlyFilter = MutableStateFlow(false)
     val dutyOnlyFilter: StateFlow<Boolean> = _dutyOnlyFilter.asStateFlow()
 
+    // Geolocated Certified Pharmacy Proximity States
+    private val _userLocation = MutableStateFlow(UserGpsLocation())
+    val userLocation: StateFlow<UserGpsLocation> = _userLocation.asStateFlow()
+
+    private val _searchRadiusKm = MutableStateFlow(10.0) // 10km default radius (0.0 = all)
+    val searchRadiusKm: StateFlow<Double> = _searchRadiusKm.asStateFlow()
+
+    private val _certifiedOnlyFilter = MutableStateFlow(true) // Filter certified pharmacies
+    val certifiedOnlyFilter: StateFlow<Boolean> = _certifiedOnlyFilter.asStateFlow()
+
+    private val _selectedSortOption = MutableStateFlow(PharmacySortOption.PROXIMITY)
+    val selectedSortOption: StateFlow<PharmacySortOption> = _selectedSortOption.asStateFlow()
+
+    private val _selectedPreferredPharmacy = MutableStateFlow<Pharmacy?>(null)
+    val selectedPreferredPharmacy: StateFlow<Pharmacy?> = _selectedPreferredPharmacy.asStateFlow()
+
+    private val _isGpsDetecting = MutableStateFlow(false)
+    val isGpsDetecting: StateFlow<Boolean> = _isGpsDetecting.asStateFlow()
+
+    val locationPresets = InitialData.locationPresets
+
+    // SMS Notifications on Delivery
+    private val _smsNotifications = MutableStateFlow<List<SmsDeliveryNotification>>(emptyList())
+    val smsNotifications: StateFlow<List<SmsDeliveryNotification>> = _smsNotifications.asStateFlow()
+
+    private val _latestDeliveredSmsAlert = MutableStateFlow<SmsDeliveryNotification?>(null)
+    val latestDeliveredSmsAlert: StateFlow<SmsDeliveryNotification?> = _latestDeliveredSmsAlert.asStateFlow()
+
+    private val _showSmsAlertDialog = MutableStateFlow(false)
+    val showSmsAlertDialog: StateFlow<Boolean> = _showSmsAlertDialog.asStateFlow()
+
+    private val _showSmsInboxSheet = MutableStateFlow(false)
+    val showSmsInboxSheet: StateFlow<Boolean> = _showSmsInboxSheet.asStateFlow()
+
     private val _selectedMedicine = MutableStateFlow<Medicine?>(null)
     val selectedMedicine: StateFlow<Medicine?> = _selectedMedicine.asStateFlow()
 
@@ -86,6 +131,19 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
     val userDeliveryAddress = MutableStateFlow("Résidence Keur Gorgui, Immeuble B, Appt 42, Dakar")
     val userName = MutableStateFlow("Mamadou Dramé")
     val userPhone = MutableStateFlow("+221 77 654 32 10")
+
+    // Distance Calculation (Haversine formula in KM)
+    fun calculateHaversineDistanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6371.0 // Earth radius in km
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        val distance = r * c
+        return (distance * 10.0).roundToInt() / 10.0
+    }
 
     // Real-Time Courier Telemetry & Live Tracking Engine
     private val _liveTelemetry = MutableStateFlow(LiveCourierTelemetry())
@@ -141,19 +199,36 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         initialValue = repository.getAllMedicines()
     )
 
-    // Filtered Pharmacies across Senegal
+    // Filtered & Distance-Calculated Pharmacies across Senegal
     val filteredPharmacies: StateFlow<List<Pharmacy>> = combine(
-        _searchQuery,
-        _dutyOnlyFilter,
-        _selectedRegion
-    ) { query, dutyOnly, region ->
-        var list = repository.getAllPharmacies()
+        combine(_searchQuery, _dutyOnlyFilter, _selectedRegion) { q, duty, region -> Triple(q, duty, region) },
+        combine(_userLocation, _searchRadiusKm, _certifiedOnlyFilter, _selectedSortOption) { loc, radius, certified, sort -> Quadruple(loc, radius, certified, sort) }
+    ) { (query, dutyOnly, region), (userLoc, radiusKm, certifiedOnly, sortOption) ->
+        var list = repository.getAllPharmacies().map { pharm ->
+            val dist = calculateHaversineDistanceKm(
+                userLoc.latitude, userLoc.longitude,
+                pharm.latitude, pharm.longitude
+            )
+            val dynamicEta = (15 + (dist * 2.5).toInt()).coerceIn(10, 90)
+            pharm.copy(distanceKm = dist, estimatedDeliveryMinutes = dynamicEta)
+        }
+
+        if (certifiedOnly) {
+            list = list.filter { it.isCertified }
+        }
+
         if (region != "Toutes les régions") {
             list = list.filter { it.region.equals(region, ignoreCase = true) }
         }
+
         if (dutyOnly) {
             list = list.filter { it.isDutyPharmacy }
         }
+
+        if (radiusKm > 0.0) {
+            list = list.filter { it.distanceKm <= radiusKm }
+        }
+
         if (query.isNotBlank()) {
             val q = query.trim().lowercase()
             list = list.filter {
@@ -161,10 +236,17 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 it.district.lowercase().contains(q) ||
                 it.city.lowercase().contains(q) ||
                 it.region.lowercase().contains(q) ||
-                it.address.lowercase().contains(q)
+                it.address.lowercase().contains(q) ||
+                it.pharmacistInCharge.lowercase().contains(q)
             }
         }
-        list
+
+        when (sortOption) {
+            PharmacySortOption.PROXIMITY -> list.sortedBy { it.distanceKm }
+            PharmacySortOption.RATING -> list.sortedByDescending { it.rating }
+            PharmacySortOption.SPEED -> list.sortedBy { it.estimatedDeliveryMinutes }
+            PharmacySortOption.FEE -> list.sortedBy { it.deliveryFeeFcfa }
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -449,8 +531,14 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 else -> OrderStatus.DELIVERED
             }
             repository.updateOrderStatus(orderId, nextStatus)
-            _activeOrder.value = currentOrder.copy(status = nextStatus.name)
+            val updatedOrder = currentOrder.copy(status = nextStatus.name)
+            _activeOrder.value = updatedOrder
             updateTelemetryForStatus(nextStatus)
+
+            // Trigger SMS on Delivery
+            if (nextStatus == OrderStatus.DELIVERED) {
+                triggerDeliverySms(updatedOrder)
+            }
         }
     }
 
@@ -633,9 +721,11 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 )
 
                 if (newProgress >= 0.98f && status == OrderStatus.OUT_FOR_DELIVERY) {
+                    val deliveredOrder = currentOrder.copy(status = OrderStatus.DELIVERED.name)
                     repository.updateOrderStatus(orderId, OrderStatus.DELIVERED)
-                    _activeOrder.value = currentOrder.copy(status = OrderStatus.DELIVERED.name)
+                    _activeOrder.value = deliveredOrder
                     updateTelemetryForStatus(OrderStatus.DELIVERED)
+                    triggerDeliverySms(deliveredOrder)
                     break
                 } else if (newProgress >= 0.65f && status == OrderStatus.SEALED_DISPATCHED) {
                     repository.updateOrderStatus(orderId, OrderStatus.OUT_FOR_DELIVERY)
@@ -866,6 +956,90 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun triggerDeliverySms(order: OrderEntity) {
+        val timestamp = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(Date())
+        val recipient = if (order.patientPhone.isNotBlank()) order.patientPhone else userPhone.value
+        val sms = SmsDeliveryNotification(
+            id = UUID.randomUUID().toString(),
+            orderId = order.id,
+            orderNumber = order.orderNumber,
+            sender = "PHARMADIRECT-SN",
+            recipientPhone = recipient,
+            messageText = "PHARMADIRECT SÉNÉGAL :\nVos médicaments (${order.orderNumber}) commandés auprès de \"${order.pharmacyName}\" ont été livrés avec succès à votre adresse (${order.deliveryAddress}).\nMontant réglé : ${order.totalFcfa} FCFA (${order.paymentMethod}).\nLivreur : ${order.courierName}.\nService client & urgences : +221 33 800 00 00.",
+            timestamp = timestamp,
+            pharmacyName = order.pharmacyName,
+            isRead = false
+        )
+        _smsNotifications.value = listOf(sms) + _smsNotifications.value.filter { it.orderId != order.id }
+        _latestDeliveredSmsAlert.value = sms
+        _showSmsAlertDialog.value = true
+    }
+
+    fun dismissSmsAlert() {
+        _showSmsAlertDialog.value = false
+    }
+
+    fun openSmsInbox() {
+        _showSmsInboxSheet.value = true
+    }
+
+    fun closeSmsInbox() {
+        _showSmsInboxSheet.value = false
+    }
+
+    fun selectPreferredPharmacy(pharmacy: Pharmacy) {
+        _selectedPreferredPharmacy.value = pharmacy
+        _selectedPharmacy.value = pharmacy
+    }
+
+    fun setLocationPreset(preset: InitialData.LocationPreset) {
+        _userLocation.value = UserGpsLocation(
+            latitude = preset.latitude,
+            longitude = preset.longitude,
+            addressName = preset.name,
+            district = preset.district,
+            isAutoDetected = false
+        )
+    }
+
+    fun setUserCoordinates(latitude: Double, longitude: Double, addressName: String, district: String) {
+        _userLocation.value = UserGpsLocation(
+            latitude = latitude,
+            longitude = longitude,
+            addressName = addressName,
+            district = district,
+            isAutoDetected = true
+        )
+    }
+
+    fun simulateGpsLocationDetection() {
+        viewModelScope.launch {
+            _isGpsDetecting.value = true
+            delay(1200) // Realistic GPS acquisition delay
+            val currentPreset = locationPresets.first()
+            _userLocation.value = UserGpsLocation(
+                latitude = currentPreset.latitude,
+                longitude = currentPreset.longitude,
+                addressName = currentPreset.name,
+                district = currentPreset.district,
+                isAutoDetected = true
+            )
+            _isGpsDetecting.value = false
+        }
+    }
+
+    fun setSearchRadius(radiusKm: Double) {
+        _searchRadiusKm.value = radiusKm
+    }
+
+    fun setSortOption(option: PharmacySortOption) {
+        _selectedSortOption.value = option
+    }
+
+    fun toggleCertifiedOnlyFilter() {
+        _certifiedOnlyFilter.value = !_certifiedOnlyFilter.value
+    }
+
     private fun seedDefaultsIfEmpty() {
         viewModelScope.launch {
             repository.seedInitialUserHistoryIfEmpty()
@@ -884,6 +1058,20 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 notes = "Ordonnance certifiée conforme par l'Ordre des Pharmaciens.",
                 recognizedMedicines = "Amoxicilline 1g x 14 comp, Ventoline 100µg x 1 flacon"
             )
+
+            // Seed sample past SMS notification
+            val initialSms = SmsDeliveryNotification(
+                id = "sms_seed_1",
+                orderId = "ord_seed_101",
+                orderNumber = "CMD-SN-8491",
+                sender = "PHARMADIRECT-SN",
+                recipientPhone = "+221 77 654 32 10",
+                messageText = "PHARMADIRECT SÉNÉGAL :\nVos médicaments (CMD-SN-8491) commandés auprès de \"Grande Pharmacie Dakaroise\" ont été livrés avec succès à votre adresse (Résidence Keur Gorgui, Dakar).\nMontant réglé : 14 300 FCFA (Wave Mobile Money).\nLivreur : Mamadou Ndiaye.\nService client & urgences : +221 33 800 00 00.",
+                timestamp = "28/08/2026 14:15",
+                pharmacyName = "Grande Pharmacie Dakaroise",
+                isRead = true
+            )
+            _smsNotifications.value = listOf(initialSms)
         }
     }
 }

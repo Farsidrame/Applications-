@@ -50,6 +50,8 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.Sms
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -359,26 +361,44 @@ fun OrdersHistoryScreen(
                             )
                         }
 
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(VerifiedBadgeBg)
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { viewModel.openSmsInbox() },
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFE8F5E9))
+                                    .size(36.dp)
+                                    .testTag("orders_open_sms_inbox_btn")
+                            ) {
                                 Icon(
-                                    imageVector = Icons.Default.Shield,
-                                    contentDescription = null,
+                                    imageVector = Icons.Default.Sms,
+                                    contentDescription = "SMS de Livraison",
                                     tint = VerifiedBadgeGreen,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "100% Officiel",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = VerifiedBadgeGreen
-                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(VerifiedBadgeBg)
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Shield,
+                                        contentDescription = null,
+                                        tint = VerifiedBadgeGreen,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "100% Officiel",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = VerifiedBadgeGreen
+                                    )
+                                }
                             }
                         }
                     }

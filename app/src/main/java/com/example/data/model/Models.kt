@@ -45,7 +45,9 @@ data class Pharmacy(
     val isCertified: Boolean,
     val estimatedDeliveryMinutes: Int,
     val deliveryFeeFcfa: Int,
-    val pharmacistInCharge: String
+    val pharmacistInCharge: String,
+    val latitude: Double = 14.6937,
+    val longitude: Double = -17.4441
 ) : Serializable
 
 data class Medicine(
@@ -200,4 +202,31 @@ data class LiveCourierTelemetry(
     val courierPhotoUrl: String = "",
     val liveTrackingActive: Boolean = true
 )
+
+data class UserGpsLocation(
+    val latitude: Double = 14.6937,
+    val longitude: Double = -17.4441,
+    val addressName: String = "Résidence Keur Gorgui, Dakar",
+    val district: String = "Sacré-Cœur / Keur Gorgui",
+    val isAutoDetected: Boolean = true
+) : Serializable
+
+data class SmsDeliveryNotification(
+    val id: String,
+    val orderId: String,
+    val orderNumber: String,
+    val sender: String = "PharmaDirect-SN",
+    val recipientPhone: String,
+    val messageText: String,
+    val timestamp: String,
+    val pharmacyName: String,
+    val isRead: Boolean = false
+) : Serializable
+
+enum class PharmacySortOption(val label: String, val shortLabel: String) {
+    PROXIMITY("Plus proches (GPS)", "Distance"),
+    RATING("Mieux notées", "Note"),
+    SPEED("Livraison la plus rapide", "Délai"),
+    FEE("Frais de livraison min.", "Frais")
+}
 

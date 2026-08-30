@@ -50,6 +50,8 @@ import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Sms
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Thermostat
@@ -295,6 +297,16 @@ fun OrderTrackingScreen(
                 },
                 actions = {
                     IconButton(
+                        onClick = { viewModel.openSmsInbox() },
+                        modifier = Modifier.testTag("tracking_open_sms_inbox_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sms,
+                            contentDescription = "SMS Notifications",
+                            tint = MedicalTealPrimary
+                        )
+                    }
+                    IconButton(
                         onClick = { showDeleteDialog = true },
                         modifier = Modifier.testTag("tracking_top_delete_btn")
                     ) {
@@ -323,6 +335,72 @@ fun OrderTrackingScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
+            // Delivered SMS Notification Banner Card
+            if (isDelivered) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("delivered_sms_notification_banner"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF81C784))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(VerifiedBadgeGreen),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Sms,
+                                    contentDescription = "SMS",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "SMS de confirmation envoyé !",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF1B5E20)
+                                )
+                                Text(
+                                    text = "Un SMS de confirmation a été transmis à ${if (displayOrder.patientPhone.isNotBlank()) displayOrder.patientPhone else "votre numéro"}.",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF2E7D32)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Button(
+                            onClick = {
+                                viewModel.triggerDeliverySms(displayOrder)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = VerifiedBadgeGreen),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("btn_view_delivered_sms")
+                        ) {
+                            Icon(Icons.Default.PhoneAndroid, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Consulter le SMS de livraison reçu", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(14.dp))
+            }
+
             // Cancelled banner
             if (isCancelled) {
                 Card(

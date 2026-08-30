@@ -30,6 +30,34 @@ object InitialData {
         "Autres Régions"
     )
 
+    data class LocationPreset(
+        val id: String,
+        val name: String,
+        val district: String,
+        val city: String,
+        val region: String,
+        val latitude: Double,
+        val longitude: Double
+    )
+
+    val locationPresets = listOf(
+        LocationPreset("loc_1", "Résidence Keur Gorgui", "Sacré-Cœur / Keur Gorgui", "Dakar", "Dakar", 14.7088, -17.4725),
+        LocationPreset("loc_2", "Dakar Plateau (Centre-Ville)", "Plateau", "Dakar", "Dakar", 14.6698, -17.4339),
+        LocationPreset("loc_3", "Mermoz - VDN", "Mermoz", "Dakar", "Dakar", 14.7120, -17.4760),
+        LocationPreset("loc_4", "Almadies / Ngor", "Almadies", "Dakar", "Dakar", 14.7431, -17.5186),
+        LocationPreset("loc_5", "Fann Résidence / Point E", "Fann - Point E", "Dakar", "Dakar", 14.6934, -17.4645),
+        LocationPreset("loc_6", "Médina - Tilène", "Médina", "Dakar", "Dakar", 14.6853, -17.4529),
+        LocationPreset("loc_7", "Parcelles Assainies", "Parcelles Assainies", "Dakar", "Dakar", 14.7570, -17.4350),
+        LocationPreset("loc_8", "Keur Massar", "Keur Massar", "Dakar", "Dakar", 14.7797, -17.3114),
+        LocationPreset("loc_9", "Rufisque Escale", "Rufisque Centre", "Rufisque", "Dakar", 14.7167, -17.2667),
+        LocationPreset("loc_10", "Thiès Centre (Place de France)", "Thiès Centre", "Thiès", "Thiès", 14.7910, -16.9260),
+        LocationPreset("loc_11", "Saly Portudal & Mbour", "Saly", "Mbour", "Mbour / Saly", 14.4430, -16.9890),
+        LocationPreset("loc_12", "Saint-Louis (Île Ndar)", "Île de Saint-Louis", "Saint-Louis", "Saint-Louis", 16.0244, -16.4897),
+        LocationPreset("loc_13", "Touba Mosquée", "Touba Centre", "Touba", "Touba / Mbacké", 14.8626, -15.8756),
+        LocationPreset("loc_14", "Kaolack Centre", "Kaolack Centre", "Kaolack", "Kaolack", 14.1500, -16.0833),
+        LocationPreset("loc_15", "Ziguinchor Escale", "Ziguinchor Escale", "Ziguinchor", "Ziguinchor", 12.5680, -16.2730)
+    )
+
     val pharmacies = listOf(
         // === DAKAR REGION ===
         Pharmacy(
@@ -48,7 +76,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Aminata Diallo (Docteur d'État en Pharmacie)"
+            pharmacistInCharge = "Dr. Aminata Diallo (Docteur d'État en Pharmacie)",
+            latitude = 14.6698,
+            longitude = -17.4339
         ),
         Pharmacy(
             id = "pharm_2",
@@ -66,7 +96,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1200,
-            pharmacistInCharge = "Dr. Jean-Marc Sow"
+            pharmacistInCharge = "Dr. Jean-Marc Sow",
+            latitude = 14.7088,
+            longitude = -17.4725
         ),
         Pharmacy(
             id = "pharm_3",
@@ -84,7 +116,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 30,
             deliveryFeeFcfa = 1500,
-            pharmacistInCharge = "Dr. Fatoumata Bâ"
+            pharmacistInCharge = "Dr. Fatoumata Bâ",
+            latitude = 14.7431,
+            longitude = -17.5186
         ),
         Pharmacy(
             id = "pharm_4",
@@ -102,7 +136,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Ibrahima Ndiaye"
+            pharmacistInCharge = "Dr. Ibrahima Ndiaye",
+            latitude = 14.6934,
+            longitude = -17.4645
         ),
         Pharmacy(
             id = "pharm_5",
@@ -120,7 +156,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Cheikh Tidiane Sy"
+            pharmacistInCharge = "Dr. Cheikh Tidiane Sy",
+            latitude = 14.6853,
+            longitude = -17.4529
         ),
         Pharmacy(
             id = "pharm_6",
@@ -138,7 +176,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 30,
             deliveryFeeFcfa = 1200,
-            pharmacistInCharge = "Dr. Mariama Diagne"
+            pharmacistInCharge = "Dr. Mariama Diagne",
+            latitude = 14.7570,
+            longitude = -17.4350
         ),
         Pharmacy(
             id = "pharm_7",
@@ -156,7 +196,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 35,
             deliveryFeeFcfa = 1500,
-            pharmacistInCharge = "Dr. Ousmane Fall"
+            pharmacistInCharge = "Dr. Ousmane Fall",
+            latitude = 14.7797,
+            longitude = -17.3114
         ),
         Pharmacy(
             id = "pharm_8",
@@ -174,7 +216,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 35,
             deliveryFeeFcfa = 1500,
-            pharmacistInCharge = "Dr. Aïssatou Kane"
+            pharmacistInCharge = "Dr. Aïssatou Kane",
+            latitude = 14.7167,
+            longitude = -17.2667
         ),
 
         // === THIÈS REGION ===
@@ -194,7 +238,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Mamadou Mansour Diop"
+            pharmacistInCharge = "Dr. Mamadou Mansour Diop",
+            latitude = 14.7910,
+            longitude = -16.9260
         ),
         Pharmacy(
             id = "pharm_10",
@@ -212,7 +258,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Awa Sarr"
+            pharmacistInCharge = "Dr. Awa Sarr",
+            latitude = 14.7820,
+            longitude = -16.9380
         ),
 
         // === MBOUR & SALY (THIÈS REGION) ===
@@ -232,7 +280,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1200,
-            pharmacistInCharge = "Dr. François Ndiaye"
+            pharmacistInCharge = "Dr. François Ndiaye",
+            latitude = 14.4430,
+            longitude = -16.9890
         ),
         Pharmacy(
             id = "pharm_12",
@@ -250,7 +300,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 30,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Binetou Cissé"
+            pharmacistInCharge = "Dr. Binetou Cissé",
+            latitude = 14.4220,
+            longitude = -16.9630
         ),
 
         // === SAINT-LOUIS REGION ===
@@ -270,7 +322,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Amadou Lamine Seck"
+            pharmacistInCharge = "Dr. Amadou Lamine Seck",
+            latitude = 16.0244,
+            longitude = -16.4897
         ),
         Pharmacy(
             id = "pharm_14",
@@ -288,7 +342,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Khady Ndiaye"
+            pharmacistInCharge = "Dr. Khady Ndiaye",
+            latitude = 16.0150,
+            longitude = -16.4950
         ),
 
         // === TOUBA & MBACKÉ (DIOURBEL REGION) ===
@@ -308,7 +364,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Serigne Mor Mbacké"
+            pharmacistInCharge = "Dr. Serigne Mor Mbacké",
+            latitude = 14.8626,
+            longitude = -15.8756
         ),
         Pharmacy(
             id = "pharm_16",
@@ -326,7 +384,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Fatou Samb"
+            pharmacistInCharge = "Dr. Fatou Samb",
+            latitude = 14.7903,
+            longitude = -15.9080
         ),
 
         // === KAOLACK REGION ===
@@ -346,7 +406,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Babacar Ndao"
+            pharmacistInCharge = "Dr. Babacar Ndao",
+            latitude = 14.1500,
+            longitude = -16.0833
         ),
         Pharmacy(
             id = "pharm_18",
@@ -364,7 +426,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Khadidiatou Niasse"
+            pharmacistInCharge = "Dr. Khadidiatou Niasse",
+            latitude = 14.1620,
+            longitude = -16.0710
         ),
 
         // === ZIGUINCHOR REGION (CASAMANCE) ===
@@ -384,7 +448,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Augustin Badji"
+            pharmacistInCharge = "Dr. Augustin Badji",
+            latitude = 12.5680,
+            longitude = -16.2730
         ),
         Pharmacy(
             id = "pharm_20",
@@ -402,7 +468,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Marie-Hélène Sané"
+            pharmacistInCharge = "Dr. Marie-Hélène Sané",
+            latitude = 12.5550,
+            longitude = -16.2680
         ),
 
         // === AUTRES RÉGIONS (TAMBACOUNDA, KOLDA, LOUGA, FATICK, MATAM, KÉDOUGOU) ===
@@ -422,7 +490,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Moussa Cissokho"
+            pharmacistInCharge = "Dr. Moussa Cissokho",
+            latitude = 13.7710,
+            longitude = -13.6770
         ),
         Pharmacy(
             id = "pharm_22",
@@ -440,7 +510,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Oumar Baldé"
+            pharmacistInCharge = "Dr. Oumar Baldé",
+            latitude = 12.8830,
+            longitude = -14.9500
         ),
         Pharmacy(
             id = "pharm_23",
@@ -458,7 +530,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 20,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Seynabou Diop"
+            pharmacistInCharge = "Dr. Seynabou Diop",
+            latitude = 15.6180,
+            longitude = -16.2240
         ),
         Pharmacy(
             id = "pharm_24",
@@ -476,7 +550,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Moustapha Sène"
+            pharmacistInCharge = "Dr. Moustapha Sène",
+            latitude = 14.3330,
+            longitude = -16.4000
         ),
         Pharmacy(
             id = "pharm_25",
@@ -494,7 +570,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 30,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Harouna Ly"
+            pharmacistInCharge = "Dr. Harouna Ly",
+            latitude = 15.6550,
+            longitude = -13.2550
         ),
         Pharmacy(
             id = "pharm_26",
@@ -512,7 +590,9 @@ object InitialData {
             isCertified = true,
             estimatedDeliveryMinutes = 25,
             deliveryFeeFcfa = 1000,
-            pharmacistInCharge = "Dr. Mamadou Diallo"
+            pharmacistInCharge = "Dr. Mamadou Diallo",
+            latitude = 12.5570,
+            longitude = -12.1760
         )
     )
 
