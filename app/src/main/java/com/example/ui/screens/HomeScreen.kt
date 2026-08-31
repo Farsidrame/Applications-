@@ -86,6 +86,7 @@ import com.example.ui.theme.SafeBlueLight
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.viewmodel.PharmaViewModel
 
@@ -362,100 +363,218 @@ fun HomeScreen(
             }
         }
 
-        // Quick Action Tiles (Upload Prescription, Duty Pharmacies, Fast Catalog)
+        // Quick Action Tiles - Clean, balanced 2x2 grid for rapid navigation
         item {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Action 1: Upload Prescription
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("action_upload_prescription")
-                        .clickable { onNavigateToPrescriptions() },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = SafeBlueLight)
+                // Row 1: Prescription + Duty Pharmacies
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalAlignment = Alignment.Start
+                    // Action 1: Upload Prescription
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("action_upload_prescription")
+                            .clickable { onNavigateToPrescriptions() },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = SafeBlueLight),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(SafeBlueSecondary),
-                            contentAlignment = Alignment.Center
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.Start
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.UploadFile,
-                                contentDescription = "Ordonnance",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(SafeBlueSecondary),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.UploadFile,
+                                    contentDescription = "Ordonnance",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Scanner Ordonnance",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = SafeBlueSecondary,
+                                lineHeight = 17.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Validation pharmacien",
+                                fontSize = 11.sp,
+                                color = TextSecondaryMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Scanner l'Ordonnance",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = SafeBlueSecondary,
-                            lineHeight = 16.sp
-                        )
-                        Text(
-                            text = "Envoyer à la pharmacie",
-                            fontSize = 11.sp,
-                            color = TextSecondaryMuted
-                        )
+                    }
+
+                    // Action 2: Duty Pharmacies 24h
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("action_duty_pharmacies")
+                            .clickable {
+                                viewModel.toggleDutyOnlyFilter()
+                                onNavigateToCatalog()
+                            },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = DutyPharmacyBg),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(DutyPharmacyOrange),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Nightlight,
+                                    contentDescription = "Pharmacies de Garde",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Pharmacies de Garde",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = DutyPharmacyOrange,
+                                lineHeight = 17.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Ouvertes 24h/24",
+                                fontSize = 11.sp,
+                                color = TextSecondaryMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
 
-                // Action 2: Duty Pharmacies 24h
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("action_duty_pharmacies")
-                        .clickable {
-                            viewModel.toggleDutyOnlyFilter()
-                            onNavigateToCatalog()
-                        },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = DutyPharmacyBg)
+                // Row 2: Catalog + Invoices/SMS
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalAlignment = Alignment.Start
+                    // Action 3: Complete Catalog
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("action_quick_catalog")
+                            .clickable { onNavigateToCatalog() },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = MedicalTealLight),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(DutyPharmacyOrange),
-                            contentAlignment = Alignment.Center
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.Start
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Nightlight,
-                                contentDescription = "Pharmacies de Garde",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(MedicalTealPrimary),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Medication,
+                                    contentDescription = "Catalogue",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Catalogue Santé",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = MedicalTealDark,
+                                lineHeight = 17.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Tous les médicaments",
+                                fontSize = 11.sp,
+                                color = TextSecondaryMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Pharmacies de Garde",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = DutyPharmacyOrange,
-                            lineHeight = 16.sp
-                        )
-                        Text(
-                            text = "Ouvertes 24h/24",
-                            fontSize = 11.sp,
-                            color = TextSecondaryMuted
-                        )
+                    }
+
+                    // Action 4: Invoices & SMS Link
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("action_quick_invoices")
+                            .clickable { onNavigateToProfile() },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = VerifiedBadgeBg),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(VerifiedBadgeGreen),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Factures & SMS",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Factures & SMS",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = VerifiedBadgeGreen,
+                                lineHeight = 17.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Reçus & liens paiement",
+                                fontSize = 11.sp,
+                                color = TextSecondaryMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }

@@ -69,6 +69,7 @@ import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.theme.TextSecondaryMuted
 import com.example.ui.viewmodel.PharmaViewModel
 
 enum class Screen(val title: String, val icon: ImageVector, val tag: String) {
@@ -118,11 +119,10 @@ fun PharmaApp(viewModel: PharmaViewModel) {
         Screen.CATALOG,
         Screen.PRESCRIPTIONS,
         Screen.CART,
-        Screen.ORDERS,
         Screen.PROFILE
     )
 
-    val showBottomBar = currentScreen in bottomNavScreens
+    val showBottomBar = currentScreen in bottomNavScreens || currentScreen == Screen.ORDERS
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -133,7 +133,7 @@ fun PharmaApp(viewModel: PharmaViewModel) {
                     tonalElevation = 8.dp
                 ) {
                     bottomNavScreens.forEach { screen ->
-                        val isSelected = currentScreen == screen
+                        val isSelected = currentScreen == screen || (screen == Screen.PROFILE && currentScreen == Screen.ORDERS)
                         NavigationBarItem(
                             modifier = Modifier.testTag(screen.tag),
                             selected = isSelected,
@@ -148,26 +148,41 @@ fun PharmaApp(viewModel: PharmaViewModel) {
                                                 containerColor = MedicalTealPrimary,
                                                 contentColor = Color.White
                                             ) {
-                                                Text("$cartCount")
+                                                Text(
+                                                    text = "$cartCount",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
                                             }
                                         }
                                     ) {
-                                        Icon(screen.icon, contentDescription = screen.title)
+                                        Icon(
+                                            imageVector = screen.icon,
+                                            contentDescription = screen.title,
+                                            modifier = Modifier.size(24.dp)
+                                        )
                                     }
                                 } else {
-                                    Icon(screen.icon, contentDescription = screen.title)
+                                    Icon(
+                                        imageVector = screen.icon,
+                                        contentDescription = screen.title,
+                                        modifier = Modifier.size(24.dp)
+                                    )
                                 }
                             },
                             label = {
                                 Text(
                                     text = screen.title,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    maxLines = 1
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = MedicalTealPrimary,
                                 selectedTextColor = MedicalTealPrimary,
+                                unselectedIconColor = TextSecondaryMuted,
+                                unselectedTextColor = TextSecondaryMuted,
                                 indicatorColor = MedicalTealLight
                             )
                         )

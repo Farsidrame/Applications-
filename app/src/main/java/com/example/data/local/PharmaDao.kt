@@ -111,4 +111,33 @@ interface PharmaDao {
 
     @Query("UPDATE delivery_addresses SET isDefault = 1 WHERE id = :id")
     suspend fun setDefaultAddress(id: String)
+
+    // --- Pharmacist Registrations ---
+    @Query("SELECT * FROM pharmacist_registrations ORDER BY registeredTimestamp DESC")
+    fun getAllPharmacists(): Flow<List<com.example.data.model.PharmacistRegistrationEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPharmacist(pharmacist: com.example.data.model.PharmacistRegistrationEntity)
+
+    @Query("UPDATE pharmacist_registrations SET status = :status WHERE id = :id")
+    suspend fun updatePharmacistStatus(id: String, status: String)
+
+    @Query("DELETE FROM pharmacist_registrations WHERE id = :id")
+    suspend fun deletePharmacistById(id: String)
+
+    // --- Delivery Couriers ---
+    @Query("SELECT * FROM delivery_couriers ORDER BY registeredTimestamp DESC")
+    fun getAllCouriers(): Flow<List<com.example.data.model.DeliveryCourierEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCourier(courier: com.example.data.model.DeliveryCourierEntity)
+
+    @Update
+    suspend fun updateCourier(courier: com.example.data.model.DeliveryCourierEntity)
+
+    @Query("UPDATE delivery_couriers SET status = :status WHERE id = :id")
+    suspend fun updateCourierStatus(id: String, status: String)
+
+    @Query("DELETE FROM delivery_couriers WHERE id = :id")
+    suspend fun deleteCourierById(id: String)
 }

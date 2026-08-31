@@ -110,6 +110,16 @@ data class OrderEntity(
     val invoiceQrCodePayload: String
 )
 
+data class PrescribedMedicineItem(
+    val medicineName: String,
+    val dosage: String,
+    val quantity: Int = 1,
+    val priceFcfa: Int = 3200,
+    val isAvailable: Boolean = true,
+    val availabilityNote: String = "En stock à l'officine",
+    val matchedMedicineId: String? = null
+) : Serializable
+
 @Entity(tableName = "prescriptions")
 data class PrescriptionEntity(
     @PrimaryKey
@@ -123,8 +133,12 @@ data class PrescriptionEntity(
     val pharmacistNotes: String,
     val recognizedMedicines: String,
     val pharmacyId: String = "pharm_1",
-    val pharmacyName: String = "Pharmacie Guigon (Dakar)",
-    val pharmacyRegion: String = "Dakar"
+    val pharmacyName: String = "Grande Pharmacie Guigon (Dakar)",
+    val pharmacyRegion: String = "Dakar",
+    val pharmacistName: String = "Dr. Aminata Fall (Docteur en Pharmacie)",
+    val pharmacistReviewStatus: String = "VALIDATED", // AWAITING_REVIEW, VALIDATED, PARTIALLY_AVAILABLE
+    val availableMedicinesSummary: String = "Amoxicilline 1g Sandoz (Disponible • 3 200 FCFA) | Ventoline 100µg Inhalateur (Disponible • 4 500 FCFA)",
+    val totalEstimatedFcfa: Int = 7700
 )
 
 @Entity(tableName = "medication_reminders")
@@ -142,17 +156,54 @@ data class ReminderEntity(
 data class UserProfileEntity(
     @PrimaryKey
     val id: String = "primary_user",
-    val fullName: String = "Mamadou Dramé",
-    val email: String = "drame678mamadou@gmail.com",
-    val phoneNumber: String = "+221 77 654 32 10",
-    val secondaryPhone: String = "+221 78 123 45 67",
-    val emergencyContactName: String = "Fatou Dramé (Épouse)",
-    val emergencyContactPhone: String = "+221 76 987 65 43",
-    val bloodGroup: String = "O+",
-    val knownAllergies: String = "Pénicilline (Légère)",
+    val fullName: String = "",
+    val email: String = "",
+    val phoneNumber: String = "",
+    val secondaryPhone: String = "",
+    val emergencyContactName: String = "",
+    val emergencyContactPhone: String = "",
+    val bloodGroup: String = "",
+    val knownAllergies: String = "",
     val preferredPaymentMethod: String = "Wave Mobile Money",
-    val medicalNotes: String = "Diabète type 2 suivi, surveillance tensionnelle"
+    val medicalNotes: String = ""
 )
+
+@Entity(tableName = "pharmacist_registrations")
+data class PharmacistRegistrationEntity(
+    @PrimaryKey
+    val id: String,
+    val fullName: String,
+    val pharmacyName: String,
+    val region: String,
+    val city: String,
+    val district: String,
+    val phoneNumber: String,
+    val email: String,
+    val licenseNumber: String,
+    val orderRegistrationNumber: String,
+    val diplomaTitle: String,
+    val documentUri: String = "",
+    val status: String = "VERIFIED_ACTIVE", // "PENDING_VALIDATION", "VERIFIED_ACTIVE"
+    val validationSmsSent: Boolean = true,
+    val registeredTimestamp: Long = System.currentTimeMillis()
+) : Serializable
+
+@Entity(tableName = "delivery_couriers")
+data class DeliveryCourierEntity(
+    @PrimaryKey
+    val id: String,
+    val fullName: String,
+    val phoneNumber: String,
+    val nationalIdCardNumber: String, // CNI / NIN
+    val address: String,
+    val vehicleType: String = "Moto", // "Moto", "Scooter électrique", "Vélo cargo", "Véhicule frigorifique"
+    val region: String = "Dakar",
+    val assignedZone: String = "Dakar & Banlieue",
+    val status: String = "DISPONIBLE", // "DISPONIBLE", "EN_COURSE", "HORS_LIGNE"
+    val totalDeliveries: Int = 0,
+    val rating: Double = 5.0,
+    val registeredTimestamp: Long = System.currentTimeMillis()
+) : Serializable
 
 @Entity(tableName = "delivery_addresses")
 data class DeliveryAddressEntity(

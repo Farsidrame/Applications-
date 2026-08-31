@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Medication
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -60,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.PrescriptionEntity
 import com.example.ui.components.CertifiedBadge
+import com.example.ui.components.PrescriptionPharmacistValidationDialog
 import com.example.ui.components.PrescriptionUploadDialog
 import com.example.ui.theme.MedicalEmeraldAccent
 import com.example.ui.theme.MedicalTealDark
@@ -81,11 +84,12 @@ fun PrescriptionsScreen(
     val allPharmacies by viewModel.allPharmacies.collectAsStateWithLifecycle()
     var showUploadDialog by remember { mutableStateOf(false) }
     var prescriptionToDelete by remember { mutableStateOf<PrescriptionEntity?>(null) }
+    var prescriptionForPharmacistValidation by remember { mutableStateOf<PrescriptionEntity?>(null) }
     var successTransmissionBanner by remember { mutableStateOf<String?>(null) }
 
     if (showUploadDialog) {
         PrescriptionUploadDialog(
-            initialPatientName = viewModel.userName.value,
+            initialPatientName = "",
             allPharmacies = allPharmacies,
             onDismiss = { showUploadDialog = false },
             onSubmit = { pName, dName, date, uri, notes, meds, pharmId, pharmName, pharmRegion ->
@@ -99,8 +103,26 @@ fun PrescriptionsScreen(
                     pharmacyId = pharmId,
                     pharmacyName = pharmName,
                     pharmacyRegion = pharmRegion,
-                    onSuccess = {
-                        successTransmissionBanner = "Ordonnance scannée et envoyée avec succès à $pharmName !"
+                    onSuccess = { rx ->
+                        successTransmissionBanner = "Ordonnance scannée et envoyée à $pharmName ! Le pharmacien a validé les stocks disponibles."
+                        prescriptionForPharmacistValidation = rx
+                    }
+                )
+            }
+        )
+    }
+
+    if (prescriptionForPharmacistValidation != null) {
+        PrescriptionPharmacistValidationDialog(
+            prescription = prescriptionForPharmacistValidation!!,
+            onDismiss = { prescriptionForPharmacistValidation = null },
+            onConfirmOrder = { selectedMeds ->
+                viewModel.orderDirectlyFromPrescription(
+                    prescription = prescriptionForPharmacistValidation!!,
+                    selectedMedicineNames = selectedMeds,
+                    onComplete = {
+                        prescriptionForPharmacistValidation = null
+                        onNavigateToCart()
                     }
                 )
             }
@@ -179,7 +201,7 @@ fun PrescriptionsScreen(
                         .height(38.dp)
                         .testTag("upload_new_prescription_button")
                 ) {
-                    Icon(Icons.Default.CropFree, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Scanner", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
@@ -249,7 +271,7 @@ fun PrescriptionsScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Scannez votre ordonnance médicale pour la transmettre directement à la pharmacie de votre choix au Sénégal (Dakar, Thiès, Touba, Saint-Louis, etc.).",
+                            text = "Scannez votre ordonnance avec la caméra pour la transmettre directement à la pharmacie de votre région au Sénégal. Le pharmacien confirme les médicaments disponibles avant que vous ne validiez la commande.",
                             fontSize = 11.sp,
                             color = MedicalTealDark,
                             lineHeight = 16.sp
@@ -281,7 +303,7 @@ fun PrescriptionsScreen(
                                 color = TextPrimaryDark
                             )
                             Text(
-                                text = "Appuyez sur Scanner pour envoyer votre ordonnance",
+                                text = "Appuyez sur Scanner pour photographier et envoyer votre ordonnance",
                                 fontSize = 12.sp,
                                 color = TextSecondaryMuted
                             )
@@ -293,7 +315,7 @@ fun PrescriptionsScreen(
                             ) {
                                 Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Scanner l'ordonnance")
+                                Text("Ouvrir la Caméra Scanner")
                             }
                         }
                     }
@@ -303,6 +325,9 @@ fun PrescriptionsScreen(
                     PrescriptionCard(
                         prescription = prescription,
                         onDelete = { prescriptionToDelete = prescription },
+                        onViewPharmacistValidation = {
+                            prescriptionForPharmacistValidation = prescription
+                        },
                         onOrderDirectly = {
                             viewModel.orderDirectlyFromPrescription(prescription)
                             onNavigateToCart()
@@ -318,6 +343,7 @@ fun PrescriptionsScreen(
 private fun PrescriptionCard(
     prescription: PrescriptionEntity,
     onDelete: () -> Unit,
+    onViewPharmacistValidation: () -> Unit,
     onOrderDirectly: () -> Unit
 ) {
     Card(
@@ -329,6 +355,7 @@ private fun PrescriptionCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            // Card Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -386,28 +413,35 @@ private fun PrescriptionCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Pharmacy badge
+            // Pharmacy destination badge & Pharmacist in charge
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(Color(0xFFE0F2F1))
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Default.LocalPharmacy,
                     contentDescription = null,
                     tint = MedicalTealPrimary,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Destinataire : ${prescription.pharmacyName} (${prescription.pharmacyRegion})",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MedicalTealDark
-                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = "${prescription.pharmacyName} (${prescription.pharmacyRegion})",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MedicalTealDark
+                    )
+                    Text(
+                        text = "Pharmacien : ${prescription.pharmacistName}",
+                        fontSize = 10.sp,
+                        color = TextSecondaryMuted
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -415,7 +449,7 @@ private fun PrescriptionCard(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "Médicaments prescrits reconnus :",
+                text = "Médicaments prescrits détectés :",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = MedicalTealDark
@@ -429,38 +463,82 @@ private fun PrescriptionCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Pharmacist response & validation badge
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color(0xFFE8F5E9))
-                    .padding(8.dp)
+                    .padding(10.dp)
             ) {
-                Text(
-                    text = "Avis Pharmacien : ${prescription.pharmacistNotes}",
-                    fontSize = 11.sp,
-                    color = VerifiedBadgeGreen,
-                    fontWeight = FontWeight.Medium
-                )
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.VerifiedUser,
+                            contentDescription = null,
+                            tint = VerifiedBadgeGreen,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Validation Pharmacie • Médicaments en stock confirmés",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = VerifiedBadgeGreen
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = prescription.pharmacistNotes,
+                        fontSize = 11.sp,
+                        color = Color(0xFF2E7D32),
+                        lineHeight = 15.sp
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Button(
-                onClick = onOrderDirectly,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(42.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary)
+            // Action Buttons: 1. Voir Validation Pharmacien / 2. Commander
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Commander les médicaments auprès de cette pharmacie",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                OutlinedButton(
+                    onClick = onViewPharmacistValidation,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(42.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 6.dp)
+                ) {
+                    Icon(Icons.Default.FactCheck, contentDescription = null, modifier = Modifier.size(16.dp), tint = MedicalTealPrimary)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Vérifier Disponibilité",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MedicalTealPrimary
+                    )
+                }
+
+                Button(
+                    onClick = onOrderDirectly,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(42.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
+                    contentPadding = PaddingValues(horizontal = 6.dp)
+                ) {
+                    Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Valider Commande",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

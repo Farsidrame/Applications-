@@ -18,9 +18,11 @@ import com.example.data.model.UserProfileEntity
         PrescriptionEntity::class,
         ReminderEntity::class,
         UserProfileEntity::class,
-        DeliveryAddressEntity::class
+        DeliveryAddressEntity::class,
+        com.example.data.model.PharmacistRegistrationEntity::class,
+        com.example.data.model.DeliveryCourierEntity::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
 abstract class PharmaDatabase : RoomDatabase() {

@@ -310,6 +310,22 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
             initialValue = null
         )
 
+    // Pharmacists Flow from Room
+    val pharmacists: StateFlow<List<com.example.data.model.PharmacistRegistrationEntity>> = repository.allPharmacists
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    // Couriers Flow from Room
+    val couriers: StateFlow<List<com.example.data.model.DeliveryCourierEntity>> = repository.allCouriers
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
     // Computed Safety Alerts (e.g., Paracetamol cumulative dosage check)
     val safetyAlerts: StateFlow<List<String>> = cartItems.combine(_isPrescriptionAttachedToCart) { items, hasRx ->
         val alerts = mutableListOf<String>()
@@ -806,17 +822,43 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun orderDirectlyFromPrescription(prescription: PrescriptionEntity) {
+    fun orderDirectlyFromPrescription(
+        prescription: PrescriptionEntity,
+        selectedMedicineNames: List<String>? = null,
+        onComplete: (Int) -> Unit = {}
+    ) {
         viewModelScope.launch {
-            // Auto add prescribed medicines to cart
-            val amox = repository.getMedicineById("med_2")
-            val ventoline = repository.getMedicineById("med_9")
             val pharmacy = repository.getPharmacyById(prescription.pharmacyId) ?: InitialData.pharmacies.first()
+            val rawList = prescription.recognizedMedicines.split(",").map { it.trim() }.filter { it.isNotBlank() }
+            val targetMedicines = if (!selectedMedicineNames.isNullOrEmpty()) selectedMedicineNames else rawList
 
-            if (amox != null) repository.addToCart(amox, pharmacy, 1)
-            if (ventoline != null) repository.addToCart(ventoline, pharmacy, 1)
+            var itemsAdded = 0
+            for (medStr in targetMedicines) {
+                val matchedMed = InitialData.medicines.find {
+                    it.name.contains(medStr, ignoreCase = true) || medStr.contains(it.name, ignoreCase = true)
+                } ?: Medicine(
+                    id = "med_rx_${System.currentTimeMillis()}_${itemsAdded}",
+                    name = medStr,
+                    brand = "Générique certifié",
+                    dci = medStr,
+                    category = "Médicament sur ordonnance",
+                    dosageForm = "Boîte / Flacon",
+                    dosageStrength = "Selon prescription",
+                    priceFcfa = 3200,
+                    requiresPrescription = true,
+                    description = "Médicament analysé et validé par ${prescription.pharmacistName} (${prescription.pharmacyName})",
+                    posology = prescription.pharmacistNotes,
+                    contraindications = "Respecter scrupuleusement la posologie de l'ordonnance",
+                    stockQuantity = 40,
+                    pharmacyId = pharmacy.id
+                )
 
-            attachPrescriptionToCart("Ordonnance #${prescription.id.take(6)} - ${prescription.pharmacyName} - Dr. ${prescription.doctorName}")
+                repository.addToCart(matchedMed, pharmacy, 1)
+                itemsAdded++
+            }
+
+            attachPrescriptionToCart("Ordonnance #${prescription.id.take(6)} validée par ${prescription.pharmacistName} (${prescription.pharmacyName})")
+            onComplete(itemsAdded)
         }
     }
 
@@ -1040,38 +1082,152 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         _certifiedOnlyFilter.value = !_certifiedOnlyFilter.value
     }
 
+    // --- Pharmacist Registrations Management ---
+    fun registerPharmacist(
+        fullName: String,
+        pharmacyName: String,
+        region: String,
+        city: String,
+        district: String,
+        phoneNumber: String,
+        email: String,
+        licenseNumber: String,
+        orderRegistrationNumber: String,
+        diplomaTitle: String,
+        documentUri: String = "",
+        onComplete: (com.example.data.model.PharmacistRegistrationEntity) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val registered = repository.registerPharmacist(
+                fullName = fullName,
+                pharmacyName = pharmacyName,
+                region = region,
+                city = city,
+                district = district,
+                phoneNumber = phoneNumber,
+                email = email,
+                licenseNumber = licenseNumber,
+                orderRegistrationNumber = orderRegistrationNumber,
+                diplomaTitle = diplomaTitle,
+                documentUri = documentUri
+            )
+            // Trigger automatic validation SMS
+            val timestamp = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(Date())
+            val sms = SmsDeliveryNotification(
+                id = UUID.randomUUID().toString(),
+                orderId = "pharma_reg_${registered.id}",
+                orderNumber = "ORDRE-SN-${registered.orderRegistrationNumber}",
+                sender = "ORDRE-PHARMACIENS-SN",
+                recipientPhone = registered.phoneNumber,
+                messageText = "RÉPUBLIQUE DU SÉNÉGAL • ORDRE NATIONAL DES PHARMACIENS :\nFélicitations Dr. ${registered.fullName}, votre inscription pour l'officine \"${registered.pharmacyName}\" (${registered.city}, ${registered.region}) a été validée avec succès.\nN° Licence : ${registered.licenseNumber} | N° Ordre : ${registered.orderRegistrationNumber}.\nVotre compte est désormais certifié et actif.",
+                timestamp = timestamp,
+                pharmacyName = registered.pharmacyName,
+                isRead = false
+            )
+            _smsNotifications.value = listOf(sms) + _smsNotifications.value
+            _latestDeliveredSmsAlert.value = sms
+            _showSmsAlertDialog.value = true
+            onComplete(registered)
+        }
+    }
+
+    fun updatePharmacistStatus(id: String, status: String) {
+        viewModelScope.launch {
+            repository.updatePharmacistStatus(id, status)
+        }
+    }
+
+    fun deletePharmacist(id: String) {
+        viewModelScope.launch {
+            repository.deletePharmacist(id)
+        }
+    }
+
+    // --- Delivery Couriers Management ---
+    fun saveCourier(
+        id: String?,
+        fullName: String,
+        phoneNumber: String,
+        nationalIdCardNumber: String,
+        address: String,
+        vehicleType: String,
+        region: String,
+        assignedZone: String,
+        status: String = "DISPONIBLE",
+        onComplete: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            repository.saveCourier(
+                id = id,
+                fullName = fullName,
+                phoneNumber = phoneNumber,
+                nationalIdCardNumber = nationalIdCardNumber,
+                address = address,
+                vehicleType = vehicleType,
+                region = region,
+                assignedZone = assignedZone,
+                status = status
+            )
+            onComplete()
+        }
+    }
+
+    fun updateCourierStatus(courierId: String, status: String) {
+        viewModelScope.launch {
+            repository.updateCourierStatus(courierId, status)
+        }
+    }
+
+    fun deleteCourier(courierId: String) {
+        viewModelScope.launch {
+            repository.deleteCourier(courierId)
+        }
+    }
+
+    // Trigger SMS with Payment Deep Link when Order is initiated / confirmed
+    fun triggerPaymentLinkSms(order: OrderEntity, paymentLinkUrl: String) {
+        val timestamp = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(Date())
+        val recipient = if (order.patientPhone.isNotBlank()) order.patientPhone else userPhone.value
+        val sms = SmsDeliveryNotification(
+            id = UUID.randomUUID().toString(),
+            orderId = order.id,
+            orderNumber = order.orderNumber,
+            sender = "PHARMADIRECT-PAY",
+            recipientPhone = recipient,
+            messageText = "PHARMADIRECT SÉNÉGAL :\nVotre commande ${order.orderNumber} auprès de \"${order.pharmacyName}\" (${order.totalFcfa} FCFA) est prête.\nCliquez ici pour régler directement via ${order.paymentMethod} :\n$paymentLinkUrl\nFacture certifiée transmise après validation.",
+            timestamp = timestamp,
+            pharmacyName = order.pharmacyName,
+            isRead = false
+        )
+        _smsNotifications.value = listOf(sms) + _smsNotifications.value.filter { it.orderId != order.id }
+        _latestDeliveredSmsAlert.value = sms
+        _showSmsAlertDialog.value = true
+    }
+
+    // Trigger Invoice SMS sent directly to client's phone
+    fun triggerInvoiceSms(order: OrderEntity) {
+        val timestamp = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(Date())
+        val recipient = if (order.patientPhone.isNotBlank()) order.patientPhone else userPhone.value
+        val invoiceText = "FACTURE ACQUITTÉE - PHARMADIRECT SÉNÉGAL\nN° Facture : ${order.orderNumber}\nPharmacie : ${order.pharmacyName}\nClient : ${order.patientName}\nArticles : ${order.itemsSummary}\nTotal payé : ${order.totalFcfa} FCFA (${order.paymentMethod})\nTransaction : ${order.paymentTransactionId}\nCode PIN livraison : ${order.deliveryPinCode}\nMerci de votre confiance. Urgences : +221 33 800 00 00."
+        val sms = SmsDeliveryNotification(
+            id = UUID.randomUUID().toString(),
+            orderId = "inv_${order.id}",
+            orderNumber = "FACT-${order.orderNumber}",
+            sender = "PHARMADIRECT-FACTURE",
+            recipientPhone = recipient,
+            messageText = invoiceText,
+            timestamp = timestamp,
+            pharmacyName = order.pharmacyName,
+            isRead = false
+        )
+        _smsNotifications.value = listOf(sms) + _smsNotifications.value.filter { it.id != "inv_${order.id}" }
+        _latestDeliveredSmsAlert.value = sms
+        _showSmsAlertDialog.value = true
+    }
+
     private fun seedDefaultsIfEmpty() {
         viewModelScope.launch {
             repository.seedInitialUserHistoryIfEmpty()
-
-            // add sample reminder
-            repository.addReminder("Doliprane 1000mg", "1 comprimé", "08:00", "Après le petit-déjeuner")
-            repository.addReminder("Amoxicilline 1g", "1 comprimé", "12:30", "Au milieu du déjeuner")
-            repository.addReminder("Amoxicilline 1g", "1 comprimé", "20:00", "Pendant le dîner")
-
-            // sample verified prescription
-            repository.submitPrescription(
-                patientName = "Mamadou Dramé",
-                doctorName = "Dr. Sokhna Ndao (Médecin Généraliste)",
-                prescriptionDate = "28 Août 2026",
-                photoUri = "sample_prescription_rx",
-                notes = "Ordonnance certifiée conforme par l'Ordre des Pharmaciens.",
-                recognizedMedicines = "Amoxicilline 1g x 14 comp, Ventoline 100µg x 1 flacon"
-            )
-
-            // Seed sample past SMS notification
-            val initialSms = SmsDeliveryNotification(
-                id = "sms_seed_1",
-                orderId = "ord_seed_101",
-                orderNumber = "CMD-SN-8491",
-                sender = "PHARMADIRECT-SN",
-                recipientPhone = "+221 77 654 32 10",
-                messageText = "PHARMADIRECT SÉNÉGAL :\nVos médicaments (CMD-SN-8491) commandés auprès de \"Grande Pharmacie Dakaroise\" ont été livrés avec succès à votre adresse (Résidence Keur Gorgui, Dakar).\nMontant réglé : 14 300 FCFA (Wave Mobile Money).\nLivreur : Mamadou Ndiaye.\nService client & urgences : +221 33 800 00 00.",
-                timestamp = "28/08/2026 14:15",
-                pharmacyName = "Grande Pharmacie Dakaroise",
-                isRead = true
-            )
-            _smsNotifications.value = listOf(initialSms)
         }
     }
 }

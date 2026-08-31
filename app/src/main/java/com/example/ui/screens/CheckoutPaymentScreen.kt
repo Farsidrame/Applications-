@@ -88,6 +88,10 @@ import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.viewmodel.PaymentProcessState
 import com.example.ui.viewmodel.PharmaViewModel
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutPaymentScreen(
@@ -96,6 +100,7 @@ fun CheckoutPaymentScreen(
     onPaymentSuccess: (OrderEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
     val paymentState by viewModel.paymentState.collectAsStateWithLifecycle()
     val userAddress by viewModel.userDeliveryAddress.collectAsStateWithLifecycle()
@@ -104,11 +109,11 @@ fun CheckoutPaymentScreen(
     val userPhone by viewModel.userPhone.collectAsStateWithLifecycle()
 
     var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.WAVE) }
-    var mobileOrCardNumber by remember { mutableStateOf("+221 77 654 32 10") }
-    var otpPinCode by remember { mutableStateOf("4821") }
+    var mobileOrCardNumber by remember(userPhone) { mutableStateOf(userPhone) }
+    var otpPinCode by remember { mutableStateOf("") }
 
     var isEditingAddress by remember { mutableStateOf(false) }
-    var addressInput by remember { mutableStateOf(userAddress) }
+    var addressInput by remember(userAddress) { mutableStateOf(userAddress) }
     var selectedRegion by remember { mutableStateOf("Dakar") }
     var selectedCity by remember { mutableStateOf("Dakar") }
     var selectedNeighborhood by remember { mutableStateOf("Sacré-Cœur / Keur Gorgui") }
@@ -217,12 +222,21 @@ fun CheckoutPaymentScreen(
                                 viewModel.processOnlinePayment(
                                     items = cartItems,
                                     pharmacy = defaultPharmacy,
-                                    deliveryAddress = userAddress,
+                                    deliveryAddress = if (addressInput.isNotBlank()) addressInput else userAddress,
                                     patientName = userName,
-                                    patientPhone = userPhone,
+                                    patientPhone = if (mobileOrCardNumber.isNotBlank()) mobileOrCardNumber else userPhone,
                                     paymentMethod = selectedPaymentMethod,
                                     mobileNumberOrCard = mobileOrCardNumber,
                                     onSuccess = { newOrder ->
+                                        val paymentLinkUrl = when (selectedPaymentMethod) {
+                                            PaymentMethod.WAVE -> "https://pay.wave.com/m/pharmadirect_sn?amount=$total&ref=${newOrder.orderNumber}"
+                                            PaymentMethod.ORANGE_MONEY -> "https://pay.orange-money.sn/checkout?id=PHARMADIRECT&amt=$total&order=${newOrder.orderNumber}"
+                                            PaymentMethod.MTN_MOMO -> "https://pay.mtn.com/momo/checkout?recipient=PHARMADIRECT&amt=$total&ref=${newOrder.orderNumber}"
+                                            PaymentMethod.CREDIT_CARD -> "https://pay.pharmadirect.sn/card/checkout?amt=$total&ref=${newOrder.orderNumber}"
+                                            else -> "https://pay.pharmadirect.sn/checkout?amt=$total&order=${newOrder.orderNumber}"
+                                        }
+                                        viewModel.triggerPaymentLinkSms(newOrder, paymentLinkUrl)
+                                        viewModel.triggerInvoiceSms(newOrder)
                                         onPaymentSuccess(newOrder)
                                     }
                                 )

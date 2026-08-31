@@ -58,11 +58,18 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Sms
+import androidx.compose.ui.platform.LocalContext
+import com.example.ui.util.InvoicePrinterHelper
+
 @Composable
 fun InvoiceDialog(
     order: OrderEntity,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onSendSms: (() -> Unit)? = null
 ) {
+    val context = LocalContext.current
     val dateStr = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(Date(order.orderTimestamp))
 
     Dialog(onDismissRequest = onDismiss) {
@@ -316,6 +323,44 @@ fun InvoiceDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Actions: Print & SMS
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            InvoicePrinterHelper.printInvoice(context, order)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MedicalTealDark)
+                    ) {
+                        Icon(Icons.Default.Print, contentDescription = "Imprimer", modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Imprimer", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            onSendSms?.invoke()
+                            InvoicePrinterHelper.shareInvoiceSmsIntent(context, order)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Sms, contentDescription = "SMS", tint = MedicalTealPrimary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Par SMS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MedicalTealPrimary)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier
@@ -326,7 +371,7 @@ fun InvoiceDialog(
                 ) {
                     Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Conserver mon reçu", fontWeight = FontWeight.Bold)
+                    Text("Fermer la facture", fontWeight = FontWeight.Bold)
                 }
             }
         }
