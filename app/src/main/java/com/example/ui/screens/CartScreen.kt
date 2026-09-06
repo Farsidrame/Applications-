@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -81,6 +82,7 @@ import com.example.data.local.InitialData
 import com.example.data.model.CartItemEntity
 import com.example.ui.components.PrescriptionRequiredBadge
 import com.example.ui.components.PrescriptionUploadDialog
+import com.example.ui.theme.BorderSoft
 import com.example.ui.theme.MedicalEmeraldAccent
 import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.MedicalTealLight
@@ -614,23 +616,23 @@ fun CartScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Sous-total médicaments:", fontSize = 12.sp, color = TextSecondaryMuted)
-                        Text("$subtotal FCFA", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text("Sous-total médicaments :", fontSize = 13.5.sp, color = TextSecondaryMuted)
+                        Text("$subtotal FCFA", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Livraison à domicile express:", fontSize = 12.sp, color = TextSecondaryMuted)
-                        Text("$deliveryFee FCFA", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text("Livraison à domicile express :", fontSize = 13.5.sp, color = TextSecondaryMuted)
+                        Text("$deliveryFee FCFA", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     HorizontalDivider(color = Color(0xFFEFF4F2))
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -638,32 +640,33 @@ fun CartScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("TOTAL À PAYER:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
+                            Text("TOTAL À PAYER", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
                             Text(
                                 text = "$total FCFA",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = MedicalTealPrimary
+                                color = MedicalTealPrimary,
+                                fontSize = 20.sp
                             )
                         }
 
                         Button(
                             onClick = onNavigateToCheckout,
                             modifier = Modifier
-                                .height(50.dp)
+                                .height(52.dp)
                                 .testTag("proceed_to_payment_button"),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary)
                         ) {
-                            Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Payer en ligne",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontSize = 14.5.sp
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -684,18 +687,20 @@ private fun CartItemRow(
             .fillMaxWidth()
             .testTag("cart_item_${item.id}"),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, BorderSoft),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MedicalTealLight),
                 contentAlignment = Alignment.Center
             ) {
@@ -703,26 +708,29 @@ private fun CartItemRow(
                     imageVector = Icons.Default.Medication,
                     contentDescription = null,
                     tint = MedicalTealPrimary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(26.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.medicineName,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimaryDark
+                    color = TextPrimaryDark,
+                    fontSize = 15.sp
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "${item.dosageStrength} • ${item.priceFcfa} FCFA / unité",
-                    fontSize = 11.sp,
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Medium,
                     color = TextSecondaryMuted
                 )
                 if (item.requiresPrescription) {
-                    PrescriptionRequiredBadge(modifier = Modifier.padding(top = 2.dp))
+                    PrescriptionRequiredBadge(modifier = Modifier.padding(top = 4.dp))
                 }
             }
 
@@ -730,34 +738,35 @@ private fun CartItemRow(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(Color(0xFFF1F8F6))
-                    .padding(2.dp)
+                    .padding(4.dp)
             ) {
                 IconButton(
                     onClick = onDecrease,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(30.dp)
                 ) {
                     Icon(
                         if (item.quantity == 1) Icons.Default.Delete else Icons.Default.Remove,
                         contentDescription = "Diminuer",
-                        modifier = Modifier.size(14.dp),
+                        modifier = Modifier.size(16.dp),
                         tint = if (item.quantity == 1) Color.Red else TextPrimaryDark
                     )
                 }
 
                 Text(
                     text = "${item.quantity}",
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
+                    color = TextPrimaryDark,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
 
                 IconButton(
                     onClick = onIncrease,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(30.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Augmenter", modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.Add, contentDescription = "Augmenter", modifier = Modifier.size(16.dp), tint = MedicalTealDark)
                 }
             }
         }

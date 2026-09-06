@@ -113,9 +113,9 @@ class PharmaRepository(private val dao: PharmaDao) {
         val txId = "TXN-" + paymentMethod.name.take(3) + "-" + System.currentTimeMillis().toString().takeLast(6)
 
         val couriers = listOf(
-            Pair("Mamadou Seck (Coursier certifié)", "+221 77 412 88 99"),
-            Pair("Ousmane Faye (Express Santé)", "+221 78 523 11 44"),
-            Pair("Cheikh Kane (Livreur pharma agréé)", "+221 76 901 33 22")
+            Pair("Mamadou Seck (Coursier certifié)", ""),
+            Pair("Ousmane Faye (Express Santé)", ""),
+            Pair("Cheikh Kane (Livreur pharma agréé)", "")
         ).random()
 
         val itemsSummary = items.joinToString(" | ") { "${it.medicineName} x${it.quantity}" }

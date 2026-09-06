@@ -13,36 +13,38 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = MedicalEmeraldAccent,
-    onPrimary = MedicalTealDark,
-    primaryContainer = MedicalTealDark,
-    onPrimaryContainer = MedicalTealLight,
-    secondary = SafeBlueLight,
-    onSecondary = SafeBlueDark,
-    background = Color(0xFF101C1A),
-    surface = Color(0xFF162523),
-    onBackground = Color(0xFFE3EFEA),
-    onSurface = Color(0xFFE3EFEA),
-    surfaceVariant = Color(0xFF1F3330),
-    onSurfaceVariant = Color(0xFFB5C9C4)
+    onPrimary = Color.White,
+    primaryContainer = MedicalTealPrimary,
+    onPrimaryContainer = Color.White,
+    secondary = SafeBlueSecondary,
+    onSecondary = Color.White,
+    background = Color(0xFF0C1715),
+    surface = Color(0xFF132420),
+    onBackground = Color.White,
+    onSurface = Color.White,
+    surfaceVariant = Color(0xFF1B302B),
+    onSurfaceVariant = Color.White,
+    outline = Color(0xFF26453D)
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = MedicalTealPrimary,
     onPrimary = Color.White,
-    primaryContainer = MedicalTealLight,
-    onPrimaryContainer = MedicalTealDark,
+    primaryContainer = MedicalTealDark,
+    onPrimaryContainer = Color.White,
     secondary = SafeBlueSecondary,
     onSecondary = Color.White,
-    secondaryContainer = SafeBlueLight,
-    onSecondaryContainer = SafeBlueDark,
+    secondaryContainer = Color(0xFF1B302B),
+    onSecondaryContainer = Color.White,
     tertiary = DutyPharmacyOrange,
-    background = MedicalBackgroundLight,
-    surface = MedicalSurfaceWhite,
-    onBackground = TextPrimaryDark,
-    onSurface = TextPrimaryDark,
-    surfaceVariant = MedicalSurfaceVariant,
-    onSurfaceVariant = TextSecondaryMuted,
-    outline = BorderSoft
+    onTertiary = Color.White,
+    background = Color(0xFF0C1715),
+    surface = Color(0xFF132420),
+    onBackground = Color.White,
+    onSurface = Color.White,
+    surfaceVariant = Color(0xFF1B302B),
+    onSurfaceVariant = Color.White,
+    outline = Color(0xFF26453D)
 )
 
 @Composable

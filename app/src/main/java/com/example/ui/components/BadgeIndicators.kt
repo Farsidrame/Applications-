@@ -94,20 +94,20 @@ fun PrescriptionRequiredBadge(modifier: Modifier = Modifier) {
         modifier = modifier
             .clip(RoundedCornerShape(6.dp))
             .background(PrescriptionAlertBg)
-            .padding(horizontal = 6.dp, vertical = 3.dp),
+            .padding(horizontal = 7.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.Warning,
             contentDescription = "Ordonnance obligatoire",
             tint = PrescriptionAlertRed,
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(13.dp)
         )
-        Spacer(modifier = Modifier.width(3.dp))
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = "Sur Ordonnance",
             color = PrescriptionAlertRed,
-            fontSize = 10.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Bold
         )
     }
@@ -119,21 +119,21 @@ fun FreeSaleBadge(modifier: Modifier = Modifier) {
         modifier = modifier
             .clip(RoundedCornerShape(6.dp))
             .background(MedicalTealLight)
-            .padding(horizontal = 6.dp, vertical = 3.dp),
+            .padding(horizontal = 7.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.CheckCircle,
             contentDescription = "Vente libre",
             tint = MedicalTealPrimary,
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(13.dp)
         )
-        Spacer(modifier = Modifier.width(3.dp))
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = "Vente Libre",
             color = MedicalTealDark,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -144,21 +144,21 @@ fun SecurePaymentPill(modifier: Modifier = Modifier) {
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
             .background(SafeBlueLight)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.Lock,
             contentDescription = "Paiement sécurisé",
             tint = SafeBlueSecondary,
-            modifier = Modifier.size(13.dp)
+            modifier = Modifier.size(14.dp)
         )
-        Spacer(modifier = Modifier.width(4.dp))
+        Spacer(modifier = Modifier.width(5.dp))
         Text(
             text = "Paiement 100% Sécurisé & Fiable",
             color = SafeBlueSecondary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }

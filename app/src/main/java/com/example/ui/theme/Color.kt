@@ -2,36 +2,43 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Medical Emerald & Mint Palette (High contrast & crisp)
-val MedicalTealPrimary = Color(0xFF00796B)
-val MedicalTealDark = Color(0xFF004D40)
-val MedicalTealLight = Color(0xFFE0F2F1)
-val MedicalEmeraldAccent = Color(0xFF00BFA5)
+// Authentic Pharmacy Emerald & Cross Green Palette (Vibrant, clear & luminous)
+val MedicalTealPrimary = Color(0xFF00875A)        // Signature Pharmacy Cross Emerald
+val MedicalTealDark = Color(0xFF004D34)           // Deep Medical Forest (Rich & High Contrast)
+val MedicalTealLight = Color(0xFFE6F7F0)          // Fresh Mint Surface
+val MedicalEmeraldAccent = Color(0xFF00BA74)      // Radiant Pharmacy Accent
 
-// Secondary Safe Blue Palette
-val SafeBlueSecondary = Color(0xFF0277BD)
-val SafeBlueLight = Color(0xFFE1F5FE)
-val SafeBlueDark = Color(0xFF01579B)
+val PharmacyGreenPrimary = MedicalTealPrimary
+val PharmacyGreenDark = MedicalTealDark
+val PharmacyGreenLight = MedicalTealLight
+val PharmacyCrossGreen = Color(0xFF10B981)
 
-// Status & Alert Colors
-val VerifiedBadgeGreen = Color(0xFF1B5E20)
-val VerifiedBadgeBg = Color(0xFFE8F5E9)
-val DutyPharmacyOrange = Color(0xFFE65100)
-val DutyPharmacyBg = Color(0xFFFFF3E0)
-val PrescriptionAlertRed = Color(0xFFB71C1C)
-val PrescriptionAlertBg = Color(0xFFFFEBEE)
+// Secondary Safe Blue Palette (Medical assurance & Cold chain)
+val SafeBlueSecondary = Color(0xFF0284C7)
+val SafeBlueLight = Color(0xFFE0F2FE)
+val SafeBlueDark = Color(0xFF0369A1)
 
-// Neutral & Surfaces - High legibility
-val MedicalBackgroundLight = Color(0xFFF8FAFB)
-val MedicalSurfaceWhite = Color(0xFFFFFFFF)
-val MedicalSurfaceVariant = Color(0xFFEFF6F5)
-val TextPrimaryDark = Color(0xFF0F2421)
-val TextSecondaryMuted = Color(0xFF475569)
-val BorderSoft = Color(0xFFD6E3E0)
+// Status, Badges & Alert Colors
+val VerifiedBadgeGreen = Color(0xFF15803D)
+val VerifiedBadgeBg = Color(0xFFDCFCE7)
+val DutyPharmacyOrange = Color(0xFFEA580C)
+val DutyPharmacyBg = Color(0xFFFFF7ED)
+val PrescriptionAlertRed = Color(0xFFDC2626)
+val PrescriptionAlertBg = Color(0xFFFEF2F2)
+
+// Neutral & Surfaces - Maximum legibility, crisp dark medical background with pure white typography
+val MedicalBackgroundLight = Color(0xFF0C1715)    // Sovereign deep medical slate-emerald
+val MedicalSurfaceWhite = Color(0xFF132420)       // Contrast dark card container
+val MedicalSurfaceVariant = Color(0xFF1B302B)     // Surface variant container
+val TextPrimaryDark = Color(0xFFFFFFFF)           // Pure crisp white text (100% white)
+val TextSecondaryMuted = Color(0xFFFFFFFF)        // Pure white text
+val TextTertiaryMuted = Color(0xFFFFFFFF)         // Pure white text
+val BorderSoft = Color(0xFF26453D)                // Clean contrast border
+val BorderMedium = Color(0xFF386156)              // Distinct interactive border
 
 // Payment Brand Colors
 val OrangeMoneyColor = Color(0xFFFF6600)
 val WaveBlueColor = Color(0xFF1DA1F2)
-val MtnMomoYellow = Color(0xFFFFCC00)
+val MtnMomoYellow = Color(0xFFFFB703)
 val VisaBlueColor = Color(0xFF1A1F71)
-val EscrowGreenColor = Color(0xFF00897B)
+val EscrowGreenColor = Color(0xFF00875A)

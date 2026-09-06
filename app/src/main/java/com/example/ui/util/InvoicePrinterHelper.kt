@@ -237,7 +237,7 @@ object InvoicePrinterHelper {
 
                 <div class="footer-seal">
                     <p style="margin: 0 0 4px 0;"><strong>Facture électronique certifiée conforme délivrée par PharmaDirect Sénégal.</strong></p>
-                    <p style="margin: 0; color: #94A3B8;">Livreur assigné : ${order.courierName} (${order.courierPhone}) • Service réclamations & Urgences : +221 33 800 00 00</p>
+                    <p style="margin: 0; color: #94A3B8;">Livreur assigné : ${order.courierName} • Service réclamations & Urgences disponible 24h/7</p>
                     <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 10px; color: #CBD5E1;">QR-PAYLOAD: ${order.invoiceQrCodePayload}</p>
                 </div>
             </body>
@@ -285,8 +285,8 @@ object InvoicePrinterHelper {
             Total : ${order.totalFcfa} FCFA (${order.paymentMethod})
             Réf Transaction : ${order.paymentTransactionId}
             Code PIN livraison : ${order.deliveryPinCode}
-            Livreur : ${order.courierName} (${order.courierPhone})
-            Facture certifiée conforme. Service client : +221 33 800 00 00
+            Livreur : ${order.courierName}
+            Facture certifiée conforme. Service client & support disponibles 24h/7.
         """.trimIndent()
 
         val intent = Intent(Intent.ACTION_VIEW).apply {

@@ -222,7 +222,7 @@ fun PharmacyDetailScreen(
                             ) {
                                 Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(16.dp), tint = MedicalTealPrimary)
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(pharmacy.phoneNumber, fontSize = 11.sp, color = MedicalTealPrimary)
+                                Text(if (pharmacy.phoneNumber.isNotBlank()) pharmacy.phoneNumber else "Contacter l'officine", fontSize = 11.sp, color = MedicalTealPrimary)
                             }
 
                             Box(

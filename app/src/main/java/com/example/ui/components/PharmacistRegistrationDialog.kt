@@ -1,5 +1,8 @@
 package com.example.ui.components
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -21,15 +25,19 @@ import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -37,11 +45,11 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,7 +66,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.local.InitialData
-import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.TextPrimaryDark
@@ -95,7 +102,20 @@ fun PharmacistRegistrationDialog(
 
     var regionExpanded by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var hasAttachedDiploma by remember { mutableStateOf(false) }
+    var attachedDocumentName by remember { mutableStateOf<String?>(null) }
+    var attachedDocumentUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Direct system document / file picker launcher
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            attachedDocumentUri = uri
+            val extractedName = uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':')
+            attachedDocumentName = if (!extractedName.isNullOrBlank()) extractedName else "copie_diplome_licence.pdf"
+            errorMessage = null
+        }
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -112,44 +132,52 @@ fun PharmacistRegistrationDialog(
                     .padding(20.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Header
-                Row(
+                // Header with White Title Banner
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    shape = RoundedCornerShape(14.dp),
+                    color = MedicalTealPrimary
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MedicalTealLight),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocalPharmacy,
-                                contentDescription = null,
-                                tint = MedicalTealPrimary,
-                                modifier = Modifier.size(24.dp)
-                            )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color.White.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.LocalPharmacy,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Inscription Pharmacien",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "Agrément Officinal & Ordre SN",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Inscription Pharmacien",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimaryDark
-                            )
-                            Text(
-                                text = "Agrément Officinal & Ordre SN",
-                                fontSize = 11.sp,
-                                color = TextSecondaryMuted
-                            )
+                        IconButton(onClick = onDismiss) {
+                            Icon(Icons.Default.Close, contentDescription = "Fermer", tint = Color.White)
                         }
-                    }
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Fermer")
                     }
                 }
 
@@ -160,17 +188,16 @@ fun PharmacistRegistrationDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFECFDF5))
-                        .border(1.dp, Color(0xFFA7F3D0), RoundedCornerShape(8.dp))
+                        .background(MedicalTealPrimary)
                         .padding(10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Verified, contentDescription = null, tint = VerifiedBadgeGreen, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Verified, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Validation instantanée par SMS officiel après transmission de vos identifiants d'ordre.",
                             fontSize = 11.sp,
-                            color = Color(0xFF065F46),
+                            color = Color.White,
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -179,7 +206,7 @@ fun PharmacistRegistrationDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // 1. Identité du Pharmacien
-                Text("1. Identité & Diplôme", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MedicalTealDark)
+                Text("1. Identité & Diplôme", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimaryDark)
                 Spacer(modifier = Modifier.height(6.dp))
 
                 OutlinedTextField(
@@ -215,7 +242,7 @@ fun PharmacistRegistrationDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // 2. Officine & Localisation
-                Text("2. Officine & Localisation", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MedicalTealDark)
+                Text("2. Officine & Localisation", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimaryDark)
                 Spacer(modifier = Modifier.height(6.dp))
 
                 OutlinedTextField(
@@ -305,7 +332,7 @@ fun PharmacistRegistrationDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // 3. Contacts & Agréments
-                Text("3. Agréments & Contact", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MedicalTealDark)
+                Text("3. Agréments & Contact", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimaryDark)
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Row(
@@ -373,29 +400,105 @@ fun PharmacistRegistrationDialog(
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // Document attach button
-                Button(
-                    onClick = { hasAttachedDiploma = !hasAttachedDiploma },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (hasAttachedDiploma) Color(0xFFE8F5E9) else Color(0xFFF1F5F9),
-                        contentColor = if (hasAttachedDiploma) Color(0xFF2E7D32) else TextPrimaryDark
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = if (hasAttachedDiploma) Icons.Default.CheckCircle else Icons.Default.UploadFile,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (hasAttachedDiploma) "Copie du Diplôme & Agrément attachée ✓" else "Joindre copie Licence / Diplôme (PDF/Photo)",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                // Direct File & Document Attachment Section
+                Text("4. Pièce Justificative (Licence / Diplôme)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimaryDark)
+                Spacer(modifier = Modifier.height(6.dp))
+
+                if (attachedDocumentName != null) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFECFDF5)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA7F3D0))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    Icons.Default.Description,
+                                    contentDescription = null,
+                                    tint = VerifiedBadgeGreen,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = attachedDocumentName ?: "Document joint",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = TextPrimaryDark,
+                                        maxLines = 1
+                                    )
+                                    Text(
+                                        text = "Fichier sélectionné avec succès ✓",
+                                        fontSize = 11.sp,
+                                        color = VerifiedBadgeGreen,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+
+                            Row {
+                                OutlinedButton(
+                                    onClick = { filePickerLauncher.launch("*/*") },
+                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(32.dp)
+                                ) {
+                                    Text("Changer", fontSize = 11.sp)
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                IconButton(
+                                    onClick = {
+                                        attachedDocumentName = null
+                                        attachedDocumentUri = null
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Supprimer", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            // Direct opening of the native document/file picker
+                            filePickerLauncher.launch("*/*")
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MedicalTealPrimary,
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .testTag("btn_attach_pharmacist_diploma")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.UploadFile,
+                            contentDescription = "Joindre document",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Joindre copie Licence / Diplôme (PDF/Photo)",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
 
                 if (errorMessage != null) {
@@ -434,11 +537,14 @@ fun PharmacistRegistrationDialog(
                         .height(48.dp)
                         .testTag("submit_pharmacist_registration_btn"),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MedicalTealPrimary,
+                        contentColor = Color.White
+                    )
                 ) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Valider mon Agrément & Activer l'Officine", fontWeight = FontWeight.Bold)
+                    Text("Valider mon Agrément & Activer l'Officine", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }

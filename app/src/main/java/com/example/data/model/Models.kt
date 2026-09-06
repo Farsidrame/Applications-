@@ -156,6 +156,7 @@ data class ReminderEntity(
 data class UserProfileEntity(
     @PrimaryKey
     val id: String = "primary_user",
+    val firebaseUid: String = "",
     val fullName: String = "",
     val email: String = "",
     val phoneNumber: String = "",
@@ -165,7 +166,10 @@ data class UserProfileEntity(
     val bloodGroup: String = "",
     val knownAllergies: String = "",
     val preferredPaymentMethod: String = "Wave Mobile Money",
-    val medicalNotes: String = ""
+    val medicalNotes: String = "",
+    val userRole: String = "Patient / Client",
+    val isAccountVerified: Boolean = false,
+    val authProvider: String = "email"
 )
 
 @Entity(tableName = "pharmacist_registrations")
@@ -246,7 +250,7 @@ data class LiveCourierTelemetry(
     val temperatureCelsius: Double = 4.8,
     val coldChainCompliant: Boolean = true,
     val courierName: String = "Mamadou Ndiaye",
-    val courierPhone: String = "+221 77 412 89 00",
+    val courierPhone: String = "",
     val courierVehicle: String = "Scooter Électrique • DK-4281-AZ",
     val courierRating: Double = 4.95,
     val courierDeliveriesCount: Int = 482,

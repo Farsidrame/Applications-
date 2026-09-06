@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,12 +39,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Medicine
+import com.example.ui.theme.BorderSoft
 import com.example.ui.theme.MedicalEmeraldAccent
 import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextTertiaryMuted
 
 @Composable
 fun MedicineCard(
@@ -59,7 +62,8 @@ fun MedicineCard(
             .clickable { onMedicineClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        border = BorderStroke(1.dp, BorderSoft),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -87,7 +91,7 @@ fun MedicineCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 // Name & Brand & Active molecule
                 Column(modifier = Modifier.weight(1f)) {
@@ -96,17 +100,23 @@ fun MedicineCard(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimaryDark,
+                        fontSize = 16.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "${medicine.dci} • ${medicine.dosageStrength}",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondaryMuted,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Prescription status badge
                 if (medicine.requiresPrescription) {
@@ -118,14 +128,15 @@ fun MedicineCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Short description
+            // Short description - Clear, visible and legible
             Text(
                 text = medicine.description,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondaryMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                fontSize = 12.sp
+                fontSize = 13.5.sp,
+                lineHeight = 19.sp
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -138,15 +149,17 @@ fun MedicineCard(
             ) {
                 Column {
                     Text(
-                        text = "Prix pharmacie",
+                        text = "Prix homologué",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondaryMuted,
-                        fontSize = 10.sp
+                        color = TextTertiaryMuted,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = "${medicine.priceFcfa} FCFA",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
+                        fontSize = 17.sp,
                         color = MedicalTealPrimary
                     )
                 }
@@ -155,7 +168,7 @@ fun MedicineCard(
                     onClick = onAddToCart,
                     modifier = Modifier
                         .testTag("add_to_cart_${medicine.id}")
-                        .height(38.dp),
+                        .height(40.dp),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MedicalTealPrimary,
@@ -166,16 +179,17 @@ fun MedicineCard(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Ajouter",
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Commander",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
     }
 }
+

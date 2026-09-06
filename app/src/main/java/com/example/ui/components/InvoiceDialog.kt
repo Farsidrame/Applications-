@@ -153,7 +153,7 @@ fun InvoiceDialog(
                                     text = order.pharmacyName,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
-                                    color = MedicalTealDark
+                                    color = TextPrimaryDark
                                 )
                                 Text(
                                     text = order.pharmacyAddress,
@@ -204,7 +204,7 @@ fun InvoiceDialog(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         // Items
-                        Text("DÉTAIL DES MÉDICAMENTS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MedicalTealDark)
+                        Text("DÉTAIL DES MÉDICAMENTS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
                         Spacer(modifier = Modifier.height(6.dp))
 
                         val itemList = order.itemsSummary.split(" | ")
@@ -252,7 +252,7 @@ fun InvoiceDialog(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("TOTAL PAYÉ EN LIGNE:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MedicalTealDark)
+                            Text("TOTAL PAYÉ EN LIGNE:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
                             Text(
                                 "${order.totalFcfa} FCFA",
                                 fontSize = 16.sp,
@@ -272,7 +272,7 @@ fun InvoiceDialog(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Mode de règlement:", fontSize = 11.sp, color = TextSecondaryMuted)
-                            Text(order.paymentMethod, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MedicalTealDark)
+                            Text(order.paymentMethod, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MedicalTealPrimary)
                         }
 
                         Spacer(modifier = Modifier.height(4.dp))
@@ -303,7 +303,7 @@ fun InvoiceDialog(
                                     text = "Traçabilité Pharmaceutique",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MedicalTealDark
+                                    color = TextPrimaryDark
                                 )
                                 Text(
                                     text = "Code PIN réception: ${order.deliveryPinCode}",
@@ -336,11 +336,14 @@ fun InvoiceDialog(
                             .weight(1f)
                             .height(44.dp),
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MedicalTealDark)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MedicalTealPrimary,
+                            contentColor = Color.White
+                        )
                     ) {
-                        Icon(Icons.Default.Print, contentDescription = "Imprimer", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Print, contentDescription = "Imprimer", tint = Color.White, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Imprimer", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Imprimer", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
 
                     OutlinedButton(

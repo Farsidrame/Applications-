@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,9 +23,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.MedicalServices
@@ -92,8 +96,14 @@ data class AdviceMessage(
 @Composable
 fun PharmacistAdviceScreen(
     viewModel: PharmaViewModel,
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // Hardware/Gesture back handler: return to previous screen
+    BackHandler(enabled = true) {
+        onBack()
+    }
+
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Conseil & Chat, 1: Rappels Médicaments, 2: Interactions
     val reminders by viewModel.reminders.collectAsStateWithLifecycle()
 
@@ -103,26 +113,49 @@ fun PharmacistAdviceScreen(
             .background(MaterialTheme.colorScheme.background)
             .testTag("pharmacist_advice_screen")
     ) {
-        // Header
+        // Header with Back Button
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
-                .padding(16.dp)
+                .padding(top = 8.dp, start = 12.dp, end = 16.dp, bottom = 8.dp)
         ) {
-            Text(
-                text = "Conseil Pharmaceutique & Suivi",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimaryDark
-            )
-            Text(
-                text = "L'expertise officinale sans vous déplacer",
-                fontSize = 12.sp,
-                color = TextSecondaryMuted
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .testTag("btn_back_pharmacist_advice")
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Retour",
+                        tint = MedicalTealPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Conseil Pharmaceutique & Suivi",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimaryDark
+                    )
+                    Text(
+                        text = "L'expertise officinale sans vous déplacer • Dr. en pharmacie",
+                        fontSize = 11.sp,
+                        color = TextSecondaryMuted
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
 
             TabRow(
                 selectedTabIndex = selectedTab,
@@ -150,19 +183,27 @@ fun PharmacistAdviceScreen(
                     onClick = { selectedTab = 2 },
                     text = { Text("Interactions", fontSize = 12.sp, fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal) }
                 )
+                Tab(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    text = { Text("Guide & FAQ", fontSize = 12.sp, fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal) }
+                )
             }
         }
 
         when (selectedTab) {
-            0 -> PharmacistChatView()
+            0 -> PharmacistChatView(onBack = onBack)
             1 -> MedicationRemindersView(viewModel = viewModel, reminders = reminders)
             2 -> InteractionCheckerView()
+            3 -> FaqScreen(onBack = { selectedTab = 0 })
         }
     }
 }
 
 @Composable
-private fun PharmacistChatView() {
+private fun PharmacistChatView(
+    onBack: () -> Unit = {}
+) {
     val messages = remember {
         mutableStateListOf(
             AdviceMessage(
@@ -190,31 +231,104 @@ private fun PharmacistChatView() {
             .fillMaxSize()
             .padding(bottom = 80.dp)
     ) {
+        // Quick Return Banner inside active conversation
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color(0xFFF1F8F6),
+            shadowElevation = 1.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onBack() }
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Retourner",
+                        tint = MedicalTealPrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Quitter la conversation",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MedicalTealDark
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(VerifiedBadgeGreen)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Pharmacien disponible",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF065F46)
+                    )
+                }
+            }
+        }
+
         // Pharmacist Duty header
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = SafeBlueLight)
         ) {
             Row(
                 modifier = Modifier.padding(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(SafeBlueSecondary),
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(SafeBlueSecondary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text("Dr. Moussa Ba • En ligne", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = SafeBlueSecondary)
+                        Text("Pharmacie Principale de Dakar (Agrément Santé N° 458/MSAS)", fontSize = 10.sp, color = TextSecondaryMuted)
+                    }
                 }
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
-                    Text("Dr. Moussa Ba • En ligne", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = SafeBlueSecondary)
-                    Text("Pharmacie Principale de Dakar (Agrément Santé N° 458/MSAS)", fontSize = 10.sp, color = TextSecondaryMuted)
+
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .testTag("btn_close_chat_dialog")
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Fermer le chat",
+                        tint = SafeBlueSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         }

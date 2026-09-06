@@ -3,6 +3,10 @@ package com.example.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.auth.AuthResult
+import com.example.auth.AuthUser
+import com.example.auth.BiometricAuthManager
+import com.example.auth.FirebaseAuthManager
 import com.example.data.local.InitialData
 import com.example.data.local.PharmaDatabase
 import com.example.data.model.CartItemEntity
@@ -22,6 +26,7 @@ import com.example.data.model.SmsDeliveryNotification
 import com.example.data.model.UserGpsLocation
 import com.example.data.model.UserProfileEntity
 import com.example.data.repository.PharmaRepository
+import com.example.service.SmsDeliveryNotificationService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,10 +59,26 @@ sealed interface PaymentProcessState {
 class PharmaViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: PharmaRepository
+    private val firebaseAuthManager: FirebaseAuthManager
+    val biometricAuthManager: BiometricAuthManager = BiometricAuthManager(application)
+
+    val currentUser: StateFlow<AuthUser?>
+    val isUserAuthenticated: StateFlow<Boolean>
+
+    private val _showAuthDialog = MutableStateFlow(false)
+    val showAuthDialog: StateFlow<Boolean> = _showAuthDialog.asStateFlow()
+
+    private val _authLoading = MutableStateFlow(false)
+    val authLoading: StateFlow<Boolean> = _authLoading.asStateFlow()
 
     init {
         val dao = PharmaDatabase.getDatabase(application).pharmaDao()
         repository = PharmaRepository(dao)
+        firebaseAuthManager = FirebaseAuthManager(application)
+        currentUser = firebaseAuthManager.currentUserFlow
+        isUserAuthenticated = firebaseAuthManager.currentUserFlow
+            .combine(MutableStateFlow(Unit)) { user, _ -> user != null }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
         seedDefaultsIfEmpty()
         observeProfileAndAddresses()
     }
@@ -127,10 +148,10 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
     private val _paymentState = MutableStateFlow<PaymentProcessState>(PaymentProcessState.Idle)
     val paymentState: StateFlow<PaymentProcessState> = _paymentState.asStateFlow()
 
-    // Default User Delivery Details
-    val userDeliveryAddress = MutableStateFlow("Résidence Keur Gorgui, Immeuble B, Appt 42, Dakar")
-    val userName = MutableStateFlow("Mamadou Dramé")
-    val userPhone = MutableStateFlow("+221 77 654 32 10")
+    // Default User Delivery Details (Clean empty initialization for security and privacy)
+    val userDeliveryAddress = MutableStateFlow("")
+    val userName = MutableStateFlow("")
+    val userPhone = MutableStateFlow("")
 
     // Distance Calculation (Haversine formula in KM)
     fun calculateHaversineDistanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
@@ -911,11 +932,14 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         knownAllergies: String,
         preferredPaymentMethod: String,
         medicalNotes: String,
+        userRole: String = "Patient / Client",
         onSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
+            val existing = repository.userProfile.firstOrNull()
             val updatedProfile = UserProfileEntity(
                 id = "primary_user",
+                firebaseUid = existing?.firebaseUid ?: "",
                 fullName = fullName.trim(),
                 email = email.trim(),
                 phoneNumber = phoneNumber.trim(),
@@ -925,13 +949,324 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 bloodGroup = bloodGroup.trim(),
                 knownAllergies = knownAllergies.trim(),
                 preferredPaymentMethod = preferredPaymentMethod,
-                medicalNotes = medicalNotes.trim()
+                medicalNotes = medicalNotes.trim(),
+                userRole = if (userRole.isNotBlank()) userRole else existing?.userRole ?: "Patient / Client",
+                isAccountVerified = existing?.isAccountVerified ?: (existing?.firebaseUid?.isNotBlank() == true),
+                authProvider = existing?.authProvider ?: "email"
             )
             repository.saveUserProfile(updatedProfile)
             userName.value = updatedProfile.fullName
             userPhone.value = updatedProfile.phoneNumber
+
+            val currentAuth = currentUser.value
+            if (currentAuth != null) {
+                firebaseAuthManager.updateCurrentUserData(
+                    currentAuth.copy(
+                        displayName = updatedProfile.fullName,
+                        email = updatedProfile.email,
+                        phoneNumber = updatedProfile.phoneNumber,
+                        role = updatedProfile.userRole
+                    )
+                )
+            }
+
             onSuccess()
         }
+    }
+
+    // --- Authentication Actions ---
+    fun openAuthDialog() {
+        _showAuthDialog.value = true
+    }
+
+    fun closeAuthDialog() {
+        _showAuthDialog.value = false
+    }
+
+    fun signInWithEmail(
+        email: String,
+        password: String,
+        onSuccess: (AuthUser) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authLoading.value = true
+            when (val result = firebaseAuthManager.signInWithEmailAndPassword(email, password)) {
+                is AuthResult.Success -> {
+                    _authLoading.value = false
+                    _showAuthDialog.value = false
+                    syncProfileWithAuthUser(result.user)
+                    onSuccess(result.user)
+                }
+                is AuthResult.Error -> {
+                    _authLoading.value = false
+                    onError(result.message)
+                }
+            }
+        }
+    }
+
+    fun signUpWithEmail(
+        email: String,
+        password: String,
+        fullName: String,
+        phoneNumber: String,
+        role: String = "Patient / Client",
+        onSuccess: (AuthUser) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authLoading.value = true
+            when (val result = firebaseAuthManager.createUserWithEmailAndPassword(email, password, fullName, phoneNumber, role)) {
+                is AuthResult.Success -> {
+                    _authLoading.value = false
+                    _showAuthDialog.value = false
+                    syncProfileWithAuthUser(result.user)
+                    onSuccess(result.user)
+                }
+                is AuthResult.Error -> {
+                    _authLoading.value = false
+                    onError(result.message)
+                }
+            }
+        }
+    }
+
+    fun signInWithPhone(
+        phoneNumber: String,
+        otpCode: String,
+        fullName: String,
+        role: String = "Patient / Client",
+        onSuccess: (AuthUser) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authLoading.value = true
+            when (val result = firebaseAuthManager.signInWithPhoneOtp(phoneNumber, otpCode, fullName, role)) {
+                is AuthResult.Success -> {
+                    _authLoading.value = false
+                    _showAuthDialog.value = false
+                    syncProfileWithAuthUser(result.user)
+                    onSuccess(result.user)
+                }
+                is AuthResult.Error -> {
+                    _authLoading.value = false
+                    onError(result.message)
+                }
+            }
+        }
+    }
+
+    fun signInWithGoogle(
+        email: String,
+        name: String,
+        role: String = "Patient / Client",
+        onSuccess: (AuthUser) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authLoading.value = true
+            when (val result = firebaseAuthManager.signInWithGoogle(email, name, role)) {
+                is AuthResult.Success -> {
+                    _authLoading.value = false
+                    _showAuthDialog.value = false
+                    syncProfileWithAuthUser(result.user)
+                    onSuccess(result.user)
+                }
+                is AuthResult.Error -> {
+                    _authLoading.value = false
+                    onError(result.message)
+                }
+            }
+        }
+    }
+
+    fun sendPasswordReset(
+        email: String,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authLoading.value = true
+            when (val result = firebaseAuthManager.sendPasswordResetEmail(email)) {
+                is AuthResult.Success -> {
+                    _authLoading.value = false
+                    onSuccess(result.message)
+                }
+                is AuthResult.Error -> {
+                    _authLoading.value = false
+                    onError(result.message)
+                }
+            }
+        }
+    }
+
+    fun signOutUser(onComplete: () -> Unit = {}) {
+        firebaseAuthManager.signOut()
+        viewModelScope.launch {
+            val existing = repository.userProfile.firstOrNull()
+            if (existing != null) {
+                repository.saveUserProfile(
+                    existing.copy(
+                        firebaseUid = "",
+                        isAccountVerified = false,
+                        authProvider = "guest"
+                    )
+                )
+            }
+            onComplete()
+        }
+    }
+
+    fun lockSession(onComplete: () -> Unit = {}) {
+        signOutUser(onComplete)
+    }
+
+    fun registerOrLoginWithEmergencyContact(
+        fullName: String,
+        email: String,
+        phoneNumber: String,
+        emergencyContactName: String,
+        emergencyContactPhone: String,
+        bloodGroup: String,
+        knownAllergies: String,
+        passwordOrPin: String,
+        userRole: String = "Patient / Client",
+        onSuccess: (AuthUser) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authLoading.value = true
+            val effectiveEmail = if (email.isNotBlank() && email.contains("@")) email.trim() else "patient.${phoneNumber.filter { it.isDigit() }.takeLast(6)}@pharmadirect.sn"
+            val effectivePassword = if (passwordOrPin.length >= 6) passwordOrPin else "Pharma2026@"
+            
+            when (val result = firebaseAuthManager.createUserWithEmailAndPassword(
+                email = effectiveEmail,
+                password = effectivePassword,
+                fullName = fullName.trim(),
+                phoneNumber = phoneNumber.trim(),
+                role = userRole
+            )) {
+                is AuthResult.Success -> {
+                    val updatedProfile = UserProfileEntity(
+                        id = "primary_user",
+                        firebaseUid = result.user.uid,
+                        fullName = fullName.trim(),
+                        email = effectiveEmail,
+                        phoneNumber = phoneNumber.trim(),
+                        emergencyContactName = emergencyContactName.trim(),
+                        emergencyContactPhone = emergencyContactPhone.trim(),
+                        bloodGroup = bloodGroup.trim(),
+                        knownAllergies = knownAllergies.trim(),
+                        preferredPaymentMethod = "Wave Mobile Money",
+                        medicalNotes = "Dossier médical sécurisé par chiffrement AES-256 GCM",
+                        userRole = userRole,
+                        isAccountVerified = true,
+                        authProvider = "firebase_direct"
+                    )
+                    repository.saveUserProfile(updatedProfile)
+                    userName.value = updatedProfile.fullName
+                    userPhone.value = updatedProfile.phoneNumber
+                    _authLoading.value = false
+                    _showAuthDialog.value = false
+                    onSuccess(result.user)
+                }
+                is AuthResult.Error -> {
+                    _authLoading.value = false
+                    onError(result.message)
+                }
+            }
+        }
+    }
+
+    fun loginAsDemoUser(onSuccess: (AuthUser) -> Unit) {
+        viewModelScope.launch {
+            _authLoading.value = true
+            val demoEmail = "patient.demo@pharmaexpress.sn"
+            val demoName = "Patient Démo Santé"
+            val demoPhone = ""
+            val demoEmergencyName = "Contact Urgence Médicale"
+            val demoEmergencyPhone = ""
+            val demoBlood = "O+"
+            val demoAllergies = "Aucune allergie médicamenteuse répertoriée"
+
+            when (val result = firebaseAuthManager.signInWithEmailAndPassword(demoEmail, "DakarPharma2026@")) {
+                is AuthResult.Success -> {
+                    val profile = UserProfileEntity(
+                        id = "primary_user",
+                        firebaseUid = result.user.uid,
+                        fullName = demoName,
+                        email = demoEmail,
+                        phoneNumber = demoPhone,
+                        emergencyContactName = demoEmergencyName,
+                        emergencyContactPhone = demoEmergencyPhone,
+                        bloodGroup = demoBlood,
+                        knownAllergies = demoAllergies,
+                        preferredPaymentMethod = "Wave Mobile Money",
+                        medicalNotes = "Groupe O+ • Aucun antécédent d'allergie • Contact d'urgence vérifié",
+                        userRole = "Patient / Client",
+                        isAccountVerified = true,
+                        authProvider = "demo_verified"
+                    )
+                    repository.saveUserProfile(profile)
+                    userName.value = profile.fullName
+                    userPhone.value = profile.phoneNumber
+                    _authLoading.value = false
+                    _showAuthDialog.value = false
+                    onSuccess(result.user)
+                }
+                is AuthResult.Error -> {
+                    // Fallback to quick simulated auth user
+                    val fallbackUser = AuthUser(
+                        uid = "usr_demo_patient",
+                        email = demoEmail,
+                        displayName = demoName,
+                        phoneNumber = demoPhone,
+                        isEmailVerified = true,
+                        role = "Patient / Client"
+                    )
+                    val profile = UserProfileEntity(
+                        id = "primary_user",
+                        firebaseUid = fallbackUser.uid,
+                        fullName = demoName,
+                        email = demoEmail,
+                        phoneNumber = demoPhone,
+                        emergencyContactName = demoEmergencyName,
+                        emergencyContactPhone = demoEmergencyPhone,
+                        bloodGroup = demoBlood,
+                        knownAllergies = demoAllergies,
+                        preferredPaymentMethod = "Wave Mobile Money",
+                        medicalNotes = "Groupe O+ • Aucun antécédent d'allergie • Contact d'urgence vérifié",
+                        userRole = "Patient / Client",
+                        isAccountVerified = true,
+                        authProvider = "demo_verified"
+                    )
+                    repository.saveUserProfile(profile)
+                    firebaseAuthManager.updateCurrentUserData(fallbackUser)
+                    userName.value = demoName
+                    userPhone.value = demoPhone
+                    _authLoading.value = false
+                    _showAuthDialog.value = false
+                    onSuccess(fallbackUser)
+                }
+            }
+        }
+    }
+
+    private suspend fun syncProfileWithAuthUser(authUser: AuthUser) {
+        val existing = repository.userProfile.firstOrNull() ?: UserProfileEntity()
+        val updated = existing.copy(
+            firebaseUid = authUser.uid,
+            fullName = if (authUser.displayName.isNullOrBlank()) existing.fullName else authUser.displayName,
+            email = if (authUser.email.isNullOrBlank()) existing.email else authUser.email,
+            phoneNumber = if (authUser.phoneNumber.isNullOrBlank()) existing.phoneNumber else authUser.phoneNumber,
+            userRole = authUser.role,
+            isAccountVerified = true,
+            authProvider = authUser.providerId
+        )
+        repository.saveUserProfile(updated)
+        userName.value = updated.fullName
+        userPhone.value = updated.phoneNumber
     }
 
     // Delivery addresses management
@@ -998,21 +1333,56 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun triggerDeliverySms(order: OrderEntity) {
-        val timestamp = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(Date())
-        val recipient = if (order.patientPhone.isNotBlank()) order.patientPhone else userPhone.value
-        val sms = SmsDeliveryNotification(
-            id = UUID.randomUUID().toString(),
-            orderId = order.id,
-            orderNumber = order.orderNumber,
-            sender = "PHARMADIRECT-SN",
-            recipientPhone = recipient,
-            messageText = "PHARMADIRECT SÉNÉGAL :\nVos médicaments (${order.orderNumber}) commandés auprès de \"${order.pharmacyName}\" ont été livrés avec succès à votre adresse (${order.deliveryAddress}).\nMontant réglé : ${order.totalFcfa} FCFA (${order.paymentMethod}).\nLivreur : ${order.courierName}.\nService client & urgences : +221 33 800 00 00.",
-            timestamp = timestamp,
-            pharmacyName = order.pharmacyName,
-            isRead = false
+    fun triggerDeliverySms(
+        order: OrderEntity,
+        scenario: SmsDeliveryNotificationService.DeliveryScenario = SmsDeliveryNotificationService.DeliveryScenario.STANDARD_DELIVERED
+    ) {
+        val sms = SmsDeliveryNotificationService.triggerFromOrder(
+            context = getApplication(),
+            order = order,
+            scenario = scenario
         )
         _smsNotifications.value = listOf(sms) + _smsNotifications.value.filter { it.orderId != order.id }
+        _latestDeliveredSmsAlert.value = sms
+        _showSmsAlertDialog.value = true
+    }
+
+    fun simulateDeliverySmsWithScenario(
+        context: android.content.Context,
+        scenario: SmsDeliveryNotificationService.DeliveryScenario,
+        order: OrderEntity? = null
+    ) {
+        val targetOrder = order ?: _activeOrder.value ?: OrderEntity(
+            id = UUID.randomUUID().toString(),
+            orderNumber = "CMD-${(1000..9999).random()}",
+            orderTimestamp = System.currentTimeMillis(),
+            status = OrderStatus.DELIVERED.name,
+            itemsSummary = "Paracétamol 1g (x2) | Amoxicilline 500mg (x1)",
+            subtotalFcfa = 5000,
+            deliveryFeeFcfa = 1500,
+            totalFcfa = 6500,
+            pharmacyId = "pharm_1",
+            pharmacyName = "Grande Pharmacie Guigon (Dakar Plateau)",
+            pharmacyAddress = "Boulevard de la République, Dakar",
+            deliveryAddress = userDeliveryAddress.value,
+            patientName = userName.value,
+            patientPhone = userPhone.value,
+            paymentMethod = "Wave Mobile Money",
+            paymentTransactionId = "WAVE-SN-${(100000..999999).random()}",
+            isPrescriptionVerified = true,
+            deliveryPinCode = "${(1000..9999).random()}",
+            courierName = "Mamadou Ndiaye",
+            courierPhone = "",
+            deliveryEtaMinutes = 20,
+            invoiceQrCodePayload = "PHARMA-INVOICE-CMD-SN"
+        )
+
+        val sms = SmsDeliveryNotificationService.triggerFromOrder(
+            context = context,
+            order = targetOrder,
+            scenario = scenario
+        )
+        _smsNotifications.value = listOf(sms) + _smsNotifications.value
         _latestDeliveredSmsAlert.value = sms
         _showSmsAlertDialog.value = true
     }
@@ -1206,23 +1576,68 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
 
     // Trigger Invoice SMS sent directly to client's phone
     fun triggerInvoiceSms(order: OrderEntity) {
-        val timestamp = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(Date())
-        val recipient = if (order.patientPhone.isNotBlank()) order.patientPhone else userPhone.value
-        val invoiceText = "FACTURE ACQUITTÉE - PHARMADIRECT SÉNÉGAL\nN° Facture : ${order.orderNumber}\nPharmacie : ${order.pharmacyName}\nClient : ${order.patientName}\nArticles : ${order.itemsSummary}\nTotal payé : ${order.totalFcfa} FCFA (${order.paymentMethod})\nTransaction : ${order.paymentTransactionId}\nCode PIN livraison : ${order.deliveryPinCode}\nMerci de votre confiance. Urgences : +221 33 800 00 00."
-        val sms = SmsDeliveryNotification(
-            id = UUID.randomUUID().toString(),
-            orderId = "inv_${order.id}",
+        val sms = SmsDeliveryNotificationService.dispatchSmsNotification(
+            context = getApplication(),
             orderNumber = "FACT-${order.orderNumber}",
-            sender = "PHARMADIRECT-FACTURE",
-            recipientPhone = recipient,
-            messageText = invoiceText,
-            timestamp = timestamp,
             pharmacyName = order.pharmacyName,
-            isRead = false
+            recipientPhone = if (order.patientPhone.isNotBlank()) order.patientPhone else userPhone.value,
+            deliveryAddress = order.deliveryAddress,
+            totalFcfa = order.totalFcfa,
+            paymentMethod = order.paymentMethod,
+            courierName = order.courierName,
+            scenario = SmsDeliveryNotificationService.DeliveryScenario.INVOICE_AND_PAYMENT
         )
-        _smsNotifications.value = listOf(sms) + _smsNotifications.value.filter { it.id != "inv_${order.id}" }
+        _smsNotifications.value = listOf(sms) + _smsNotifications.value.filter { it.orderId != "inv_${order.id}" }
         _latestDeliveredSmsAlert.value = sms
         _showSmsAlertDialog.value = true
+    }
+
+    // --- SMS Deletion and Cleanup Functions ---
+    fun deleteSmsNotification(smsId: String) {
+        _smsNotifications.value = _smsNotifications.value.filter { it.id != smsId }
+        if (_latestDeliveredSmsAlert.value?.id == smsId) {
+            _latestDeliveredSmsAlert.value = null
+            _showSmsAlertDialog.value = false
+        }
+    }
+
+    fun deleteBillingSms(orderId: String) {
+        _smsNotifications.value = _smsNotifications.value.filter { sms ->
+            sms.orderId != orderId &&
+            sms.orderId != "inv_$orderId" &&
+            !sms.orderNumber.contains(orderId) &&
+            !sms.id.contains(orderId)
+        }
+        if (_latestDeliveredSmsAlert.value?.orderId == orderId || _latestDeliveredSmsAlert.value?.orderId == "inv_$orderId") {
+            _latestDeliveredSmsAlert.value = null
+            _showSmsAlertDialog.value = false
+        }
+    }
+
+    fun deleteAllBillingSms() {
+        _smsNotifications.value = _smsNotifications.value.filter { sms ->
+            !sms.sender.contains("PAY", ignoreCase = true) &&
+            !sms.orderNumber.startsWith("FACT-") &&
+            !sms.messageText.contains("Facture", ignoreCase = true) &&
+            !sms.messageText.contains("régler", ignoreCase = true) &&
+            !sms.messageText.contains("Paiement", ignoreCase = true)
+        }
+        val currentAlert = _latestDeliveredSmsAlert.value
+        if (currentAlert != null && (
+            currentAlert.sender.contains("PAY", ignoreCase = true) ||
+            currentAlert.orderNumber.startsWith("FACT-") ||
+            currentAlert.messageText.contains("Facture", ignoreCase = true) ||
+            currentAlert.messageText.contains("régler", ignoreCase = true)
+        )) {
+            _latestDeliveredSmsAlert.value = null
+            _showSmsAlertDialog.value = false
+        }
+    }
+
+    fun clearAllSms() {
+        _smsNotifications.value = emptyList()
+        _latestDeliveredSmsAlert.value = null
+        _showSmsAlertDialog.value = false
     }
 
     private fun seedDefaultsIfEmpty() {

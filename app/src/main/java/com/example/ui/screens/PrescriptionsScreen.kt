@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,6 +65,7 @@ import com.example.data.model.PrescriptionEntity
 import com.example.ui.components.CertifiedBadge
 import com.example.ui.components.PrescriptionPharmacistValidationDialog
 import com.example.ui.components.PrescriptionUploadDialog
+import com.example.ui.theme.BorderSoft
 import com.example.ui.theme.MedicalEmeraldAccent
 import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.MedicalTealLight
@@ -352,7 +354,8 @@ private fun PrescriptionCard(
             .testTag("prescription_card_${prescription.id}"),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        border = BorderStroke(1.dp, BorderSoft),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Card Header
@@ -367,8 +370,8 @@ private fun PrescriptionCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
                             .background(MedicalTealLight),
                         contentAlignment = Alignment.Center
                     ) {
@@ -376,20 +379,22 @@ private fun PrescriptionCard(
                             imageVector = Icons.Default.Description,
                             contentDescription = null,
                             tint = MedicalTealPrimary,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
                             text = prescription.doctorName,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
+                            fontSize = 15.sp,
                             color = TextPrimaryDark
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Patient: ${prescription.patientName} • ${prescription.prescriptionDate}",
-                            fontSize = 11.sp,
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Medium,
                             color = TextSecondaryMuted
                         )
                     }
@@ -399,19 +404,19 @@ private fun PrescriptionCard(
                     CertifiedBadge(text = "Transmise ✓")
                     IconButton(
                         onClick = onDelete,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(34.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.DeleteOutline,
                             contentDescription = "Supprimer",
                             tint = Color(0xFFB0BEC5),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Pharmacy destination badge & Pharmacist in charge
             Row(
@@ -419,57 +424,58 @@ private fun PrescriptionCard(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
                     .background(Color(0xFFE0F2F1))
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Default.LocalPharmacy,
                     contentDescription = null,
                     tint = MedicalTealPrimary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
                         text = "${prescription.pharmacyName} (${prescription.pharmacyRegion})",
-                        fontSize = 12.sp,
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = MedicalTealDark
                     )
                     Text(
-                        text = "Pharmacien : ${prescription.pharmacistName}",
-                        fontSize = 10.sp,
+                        text = "Pharmacien responsable : ${prescription.pharmacistName}",
+                        fontSize = 11.5.sp,
                         color = TextSecondaryMuted
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             HorizontalDivider(color = Color(0xFFEFF4F2))
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "Médicaments prescrits détectés :",
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = MedicalTealDark
             )
+            Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = prescription.recognizedMedicines,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 color = TextPrimaryDark,
-                lineHeight = 16.sp
+                lineHeight = 18.sp
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Pharmacist response & validation badge
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(Color(0xFFE8F5E9))
-                    .padding(10.dp)
+                    .padding(12.dp)
             ) {
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -477,12 +483,12 @@ private fun PrescriptionCard(
                             imageVector = Icons.Default.VerifiedUser,
                             contentDescription = null,
                             tint = VerifiedBadgeGreen,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "Validation Pharmacie • Médicaments en stock confirmés",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = VerifiedBadgeGreen
                         )
@@ -490,33 +496,33 @@ private fun PrescriptionCard(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = prescription.pharmacistNotes,
-                        fontSize = 11.sp,
-                        color = Color(0xFF2E7D32),
-                        lineHeight = 15.sp
+                        fontSize = 12.sp,
+                        color = Color(0xFF1B5E20),
+                        lineHeight = 17.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Action Buttons: 1. Voir Validation Pharmacien / 2. Commander
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OutlinedButton(
                     onClick = onViewPharmacistValidation,
                     modifier = Modifier
                         .weight(1f)
-                        .height(42.dp),
+                        .height(44.dp),
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(horizontal = 6.dp)
                 ) {
-                    Icon(Icons.Default.FactCheck, contentDescription = null, modifier = Modifier.size(16.dp), tint = MedicalTealPrimary)
+                    Icon(Icons.Default.FactCheck, contentDescription = null, modifier = Modifier.size(17.dp), tint = MedicalTealPrimary)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Vérifier Disponibilité",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MedicalTealPrimary
                     )
@@ -526,16 +532,16 @@ private fun PrescriptionCard(
                     onClick = onOrderDirectly,
                     modifier = Modifier
                         .weight(1f)
-                        .height(42.dp),
+                        .height(44.dp),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
                     contentPadding = PaddingValues(horizontal = 6.dp)
                 ) {
-                    Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(17.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Valider Commande",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }

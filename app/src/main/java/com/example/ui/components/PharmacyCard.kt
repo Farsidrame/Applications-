@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,12 +37,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Pharmacy
+import com.example.ui.theme.BorderSoft
 import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextTertiaryMuted
 
 @Composable
 fun PharmacyCard(
@@ -56,7 +59,8 @@ fun PharmacyCard(
             .clickable { onPharmacyClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        border = BorderStroke(1.dp, BorderSoft),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -84,12 +88,12 @@ fun PharmacyCard(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
                             .background(MedicalTealLight)
-                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                            .padding(horizontal = 7.dp, vertical = 3.dp)
                     ) {
                         Text(
                             text = pharmacy.region,
                             color = MedicalTealDark,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -100,25 +104,25 @@ fun PharmacyCard(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
                         .background(Color(0xFFFFF8E1))
-                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Star,
                         contentDescription = "Note",
                         tint = Color(0xFFF57F17),
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(15.dp)
                     )
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(
                         text = "${pharmacy.rating} (${pharmacy.reviewCount})",
-                        color = Color(0xFFE65100),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
+                        color = Color(0xFFC64100),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Pharmacy Name & Pharmacist
             Text(
@@ -126,15 +130,19 @@ fun PharmacyCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimaryDark,
+                fontSize = 16.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = pharmacy.pharmacistInCharge,
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondaryMuted,
-                fontSize = 12.sp
+                fontWeight = FontWeight.Medium,
+                fontSize = 13.sp
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -147,7 +155,7 @@ fun PharmacyCard(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = "Adresse",
                     tint = MedicalTealPrimary,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(17.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
@@ -156,7 +164,7 @@ fun PharmacyCard(
                     color = TextSecondaryMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    fontSize = 12.sp
+                    fontSize = 13.sp
                 )
             }
 
@@ -167,8 +175,8 @@ fun PharmacyCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MedicalTealLight.copy(alpha = 0.5f))
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .background(MedicalTealLight.copy(alpha = 0.6f))
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -177,24 +185,25 @@ fun PharmacyCard(
                         imageVector = Icons.Default.LocalShipping,
                         contentDescription = "Livraison",
                         tint = MedicalTealPrimary,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Livraison en ~${pharmacy.estimatedDeliveryMinutes} min",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
+                        text = "Livraison express ~${pharmacy.estimatedDeliveryMinutes} min",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
                         color = TextPrimaryDark
                     )
                 }
 
                 Text(
                     text = "Frais: ${pharmacy.deliveryFeeFcfa} FCFA",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = MedicalTealPrimary
                 )
             }
         }
     }
 }
+

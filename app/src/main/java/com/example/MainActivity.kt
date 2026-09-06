@@ -1,7 +1,7 @@
 package com.example
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.Crossfade
@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Home
@@ -51,12 +52,15 @@ import com.example.data.model.Medicine
 import com.example.data.model.OrderEntity
 import com.example.data.model.Pharmacy
 import com.example.data.repository.PharmaRepository
+import com.example.ui.components.AuthDialog
 import com.example.ui.components.SmsDeliveryAlertDialog
 import com.example.ui.components.SmsInboxBottomSheet
 import com.example.ui.screens.CartScreen
 import com.example.ui.screens.CatalogScreen
 import com.example.ui.screens.CheckoutPaymentScreen
+import com.example.ui.screens.FaqScreen
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.MandatoryAuthScreen
 import com.example.ui.screens.MedicineDetailScreen
 import com.example.ui.screens.OrderTrackingScreen
 import com.example.ui.screens.OrdersHistoryScreen
@@ -80,13 +84,14 @@ enum class Screen(val title: String, val icon: ImageVector, val tag: String) {
     ORDERS("Commandes", Icons.Default.ReceiptLong, "nav_orders"),
     PROFILE("Profil", Icons.Default.Person, "nav_profile"),
     ADVICE("Conseil", Icons.Default.Chat, "nav_advice"),
+    FAQ("Guide & FAQ", Icons.AutoMirrored.Filled.HelpOutline, "nav_faq"),
     MEDICINE_DETAIL("Détail", Icons.Default.Medication, "nav_detail"),
     PHARMACY_DETAIL("Pharmacie", Icons.Default.LocalPharmacy, "nav_pharmacy_detail"),
     CHECKOUT("Paiement", Icons.Default.ShoppingCart, "nav_checkout"),
     TRACKING("Suivi", Icons.Default.ReceiptLong, "nav_tracking")
 }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -101,10 +106,22 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PharmaApp(viewModel: PharmaViewModel) {
-    var currentScreen by remember { mutableStateOf(Screen.HOME) }
+    var currentScreen by remember { mutableStateOf(Screen.PROFILE) }
     var selectedMedicine by remember { mutableStateOf<Medicine?>(null) }
     var selectedPharmacy by remember { mutableStateOf<Pharmacy?>(null) }
     var trackingOrder by remember { mutableStateOf<OrderEntity?>(null) }
+
+    val isUserAuthenticated by viewModel.isUserAuthenticated.collectAsStateWithLifecycle()
+
+    if (!isUserAuthenticated) {
+        MandatoryAuthScreen(
+            viewModel = viewModel,
+            onAuthenticated = {
+                currentScreen = Screen.PROFILE
+            }
+        )
+        return
+    }
 
     val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
     val orders by viewModel.orders.collectAsStateWithLifecycle()
@@ -173,14 +190,14 @@ fun PharmaApp(viewModel: PharmaViewModel) {
                             label = {
                                 Text(
                                     text = screen.title,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
                                     maxLines = 1
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = MedicalTealPrimary,
-                                selectedTextColor = MedicalTealPrimary,
+                                selectedTextColor = MedicalTealDark,
                                 unselectedIconColor = TextSecondaryMuted,
                                 unselectedTextColor = TextSecondaryMuted,
                                 indicatorColor = MedicalTealLight
@@ -205,6 +222,7 @@ fun PharmaApp(viewModel: PharmaViewModel) {
                         onNavigateToCart = { currentScreen = Screen.CART },
                         onNavigateToProfile = { currentScreen = Screen.PROFILE },
                         onNavigateToAdvice = { currentScreen = Screen.ADVICE },
+                        onNavigateToFaq = { currentScreen = Screen.FAQ },
                         onNavigateToTracking = { order ->
                             trackingOrder = order
                             currentScreen = Screen.TRACKING
@@ -254,7 +272,17 @@ fun PharmaApp(viewModel: PharmaViewModel) {
 
                     Screen.PROFILE -> ProfileScreen(viewModel = viewModel)
 
-                    Screen.ADVICE -> PharmacistAdviceScreen(viewModel = viewModel)
+                    Screen.ADVICE -> PharmacistAdviceScreen(
+                        viewModel = viewModel,
+                        onBack = { currentScreen = Screen.HOME }
+                    )
+
+                    Screen.FAQ -> FaqScreen(
+                        onBack = { currentScreen = Screen.HOME },
+                        onNavigateToCatalog = { currentScreen = Screen.CATALOG },
+                        onNavigateToPrescriptions = { currentScreen = Screen.PRESCRIPTIONS },
+                        onNavigateToAdvice = { currentScreen = Screen.ADVICE }
+                    )
 
                     Screen.MEDICINE_DETAIL -> {
                         selectedMedicine?.let { med ->
@@ -312,24 +340,71 @@ fun PharmaApp(viewModel: PharmaViewModel) {
 
         // Global Real-Time Delivery SMS Alert Dialog
         if (showSmsAlert && latestSms != null) {
+            val alertSms = latestSms!!
             SmsDeliveryAlertDialog(
-                sms = latestSms!!,
+                sms = alertSms,
                 onDismiss = { viewModel.dismissSmsAlert() },
                 onViewOrder = {
-                    val targetOrder = orders.find { it.id == latestSms!!.orderId }
+                    val targetOrder = orders.find { it.id == alertSms.orderId }
                     if (targetOrder != null) {
                         trackingOrder = targetOrder
                         currentScreen = Screen.TRACKING
                     }
+                },
+                onDelete = {
+                    viewModel.deleteSmsNotification(alertSms.id)
                 }
             )
         }
 
         // Global SMS Inbox Bottom Sheet
         if (showSmsInbox) {
+            val currentContext = LocalContext.current
             SmsInboxBottomSheet(
                 smsList = smsList,
-                onDismiss = { viewModel.closeSmsInbox() }
+                onDismiss = { viewModel.closeSmsInbox() },
+                onDeleteSms = { smsId ->
+                    viewModel.deleteSmsNotification(smsId)
+                },
+                onDeleteBillingSms = {
+                    viewModel.deleteAllBillingSms()
+                },
+                onClearAll = {
+                    viewModel.clearAllSms()
+                },
+                onSimulateScenario = { scenario ->
+                    val activeOrder = trackingOrder ?: orders.firstOrNull()
+                    viewModel.simulateDeliverySmsWithScenario(currentContext, scenario, activeOrder)
+                }
+            )
+        }
+
+        // Global Firebase Authentication Dialog
+        val showAuthDialog by viewModel.showAuthDialog.collectAsStateWithLifecycle()
+        val isAuthLoading by viewModel.authLoading.collectAsStateWithLifecycle()
+
+        if (showAuthDialog) {
+            AuthDialog(
+                onDismiss = { viewModel.closeAuthDialog() },
+                isLoading = isAuthLoading,
+                onSignInEmail = { email, password, onSuccess, onError ->
+                    viewModel.signInWithEmail(email, password, onSuccess, onError)
+                },
+                onSignUpEmail = { email, password, fullName, phone, role, onSuccess, onError ->
+                    viewModel.signUpWithEmail(email, password, fullName, phone, role, onSuccess, onError)
+                },
+                onSignInPhone = { phone, otp, fullName, role, onSuccess, onError ->
+                    viewModel.signInWithPhone(phone, otp, fullName, role, onSuccess, onError)
+                },
+                onSignInGoogle = { email, name, role, onSuccess, onError ->
+                    viewModel.signInWithGoogle(email, name, role, onSuccess, onError)
+                },
+                onPasswordReset = { email, onSuccess, onError ->
+                    viewModel.sendPasswordReset(email, onSuccess, onError)
+                },
+                onAuthSuccess = { _ ->
+                    viewModel.closeAuthDialog()
+                }
             )
         }
     }

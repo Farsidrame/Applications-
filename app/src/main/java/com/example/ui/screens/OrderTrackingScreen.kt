@@ -754,12 +754,26 @@ fun OrderTrackingScreen(
                             HorizontalDivider(color = Color(0xFFEFF4F2))
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            Text(
-                                text = "Messagerie directe avec votre coursier de santé",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MedicalTealPrimary
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Messagerie directe avec votre coursier",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MedicalTealPrimary
+                                )
+                                TextButton(
+                                    onClick = { isChatExpanded = false },
+                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Fermer le chat", tint = MedicalTealPrimary, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Fermer le chat", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MedicalTealPrimary)
+                                }
+                            }
                             Spacer(modifier = Modifier.height(8.dp))
 
                             // Chat Messages Box

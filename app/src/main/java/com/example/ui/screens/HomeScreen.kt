@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,6 +22,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
@@ -98,6 +101,7 @@ fun HomeScreen(
     onNavigateToCart: () -> Unit,
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAdvice: () -> Unit = {},
+    onNavigateToFaq: () -> Unit = {},
     onNavigateToTracking: (OrderEntity) -> Unit = {},
     onMedicineClick: (Medicine) -> Unit,
     onPharmacyClick: (Pharmacy) -> Unit,
@@ -136,13 +140,14 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable { onNavigateToProfile() }
                         .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onNavigateToProfile() },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -154,13 +159,13 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "LIVRAISON POUR ${currentUserName.uppercase()}",
+                                text = if (currentUserName.isNotBlank()) "LIVRAISON POUR ${currentUserName.uppercase()}" else "LIVRAISON PHARMACEUTIQUE",
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = currentDeliveryAddress,
+                                text = if (currentDeliveryAddress.isNotBlank()) currentDeliveryAddress else "Sélectionnez ou ajoutez votre adresse",
                                 color = Color.White,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
@@ -170,17 +175,35 @@ fun HomeScreen(
                         }
                     }
 
-                    IconButton(
-                        onClick = onNavigateToProfile,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .testTag("btn_home_profile")
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Mon Profil & Adresses",
-                            tint = Color.White
-                        )
+                        IconButton(
+                            onClick = onNavigateToFaq,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .testTag("btn_home_faq")
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                                contentDescription = "Guide & FAQ",
+                                tint = Color.White
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onNavigateToProfile,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .testTag("btn_home_profile")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Mon Profil & Adresses",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -382,17 +405,18 @@ fun HomeScreen(
                             .weight(1f)
                             .testTag("action_upload_prescription")
                             .clickable { onNavigateToPrescriptions() },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = SafeBlueLight),
+                        border = BorderStroke(1.dp, SafeBlueSecondary.copy(alpha = 0.25f)),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(14.dp),
                             horizontalAlignment = Alignment.Start
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(40.dp)
                                     .clip(CircleShape)
                                     .background(SafeBlueSecondary),
                                 contentAlignment = Alignment.Center
@@ -401,23 +425,25 @@ fun HomeScreen(
                                     imageVector = Icons.Default.UploadFile,
                                     contentDescription = "Ordonnance",
                                     tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = "Scanner Ordonnance",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
+                                fontSize = 14.5.sp,
                                 color = SafeBlueSecondary,
-                                lineHeight = 17.sp,
+                                lineHeight = 18.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Validation pharmacien",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 color = TextSecondaryMuted,
+                                fontWeight = FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -433,17 +459,18 @@ fun HomeScreen(
                                 viewModel.toggleDutyOnlyFilter()
                                 onNavigateToCatalog()
                             },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = DutyPharmacyBg),
+                        border = BorderStroke(1.dp, DutyPharmacyOrange.copy(alpha = 0.25f)),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(14.dp),
                             horizontalAlignment = Alignment.Start
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(40.dp)
                                     .clip(CircleShape)
                                     .background(DutyPharmacyOrange),
                                 contentAlignment = Alignment.Center
@@ -452,23 +479,25 @@ fun HomeScreen(
                                     imageVector = Icons.Default.Nightlight,
                                     contentDescription = "Pharmacies de Garde",
                                     tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = "Pharmacies de Garde",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
+                                fontSize = 14.5.sp,
                                 color = DutyPharmacyOrange,
-                                lineHeight = 17.sp,
+                                lineHeight = 18.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Ouvertes 24h/24",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 color = TextSecondaryMuted,
+                                fontWeight = FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -487,17 +516,18 @@ fun HomeScreen(
                             .weight(1f)
                             .testTag("action_quick_catalog")
                             .clickable { onNavigateToCatalog() },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MedicalTealLight),
+                        border = BorderStroke(1.dp, MedicalTealPrimary.copy(alpha = 0.25f)),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(14.dp),
                             horizontalAlignment = Alignment.Start
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(40.dp)
                                     .clip(CircleShape)
                                     .background(MedicalTealPrimary),
                                 contentAlignment = Alignment.Center
@@ -506,23 +536,25 @@ fun HomeScreen(
                                     imageVector = Icons.Default.Medication,
                                     contentDescription = "Catalogue",
                                     tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = "Catalogue Santé",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
+                                fontSize = 14.5.sp,
                                 color = MedicalTealDark,
-                                lineHeight = 17.sp,
+                                lineHeight = 18.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Tous les médicaments",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 color = TextSecondaryMuted,
+                                fontWeight = FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -535,17 +567,18 @@ fun HomeScreen(
                             .weight(1f)
                             .testTag("action_quick_invoices")
                             .clickable { onNavigateToProfile() },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = VerifiedBadgeBg),
+                        border = BorderStroke(1.dp, VerifiedBadgeGreen.copy(alpha = 0.25f)),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(14.dp),
                             horizontalAlignment = Alignment.Start
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(40.dp)
                                     .clip(CircleShape)
                                     .background(VerifiedBadgeGreen),
                                 contentAlignment = Alignment.Center
@@ -554,27 +587,103 @@ fun HomeScreen(
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = "Factures & SMS",
                                     tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = "Factures & SMS",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
+                                fontSize = 14.5.sp,
                                 color = VerifiedBadgeGreen,
-                                lineHeight = 17.sp,
+                                lineHeight = 18.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Reçus & liens paiement",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 color = TextSecondaryMuted,
+                                fontWeight = FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Action 5: Banner Guide & FAQ
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("action_quick_faq")
+                        .clickable { onNavigateToFaq() },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SafeBlueLight),
+                    border = BorderStroke(1.dp, SafeBlueSecondary.copy(alpha = 0.3f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(SafeBlueSecondary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                                contentDescription = "Guide & FAQ",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Guide Débutant & FAQ Santé",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = SafeBlueSecondary
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(SafeBlueSecondary)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "AIDE",
+                                        color = Color.White,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text(
+                                text = "Comment commander, ordonnances et bon usage des médicaments",
+                                fontSize = 12.5.sp,
+                                color = TextSecondaryMuted,
+                                lineHeight = 17.sp
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                            contentDescription = "Ouvrir",
+                            tint = SafeBlueSecondary,
+                            modifier = Modifier.size(15.dp)
+                        )
                     }
                 }
             }
@@ -775,6 +884,31 @@ fun HomeScreen(
                         color = TextSecondaryMuted,
                         lineHeight = 18.sp
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    androidx.compose.material3.OutlinedButton(
+                        onClick = onNavigateToFaq,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("btn_banner_faq"),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, MedicalTealPrimary)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = null,
+                            tint = MedicalTealPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Consulter le Guide & FAQ Complète",
+                            color = MedicalTealPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
         }

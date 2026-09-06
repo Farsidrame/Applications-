@@ -29,6 +29,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddLocationAlt
 import androidx.compose.material.icons.filled.Badge
@@ -45,6 +47,9 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockReset
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Print
@@ -52,8 +57,11 @@ import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.TwoWheeler
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.VpnKey
+import com.example.auth.AuthUser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -110,10 +118,14 @@ import com.example.data.model.DeliveryAddressEntity
 import com.example.data.model.DeliveryCourierEntity
 import com.example.data.model.OrderEntity
 import com.example.data.model.PharmacistRegistrationEntity
+import com.example.data.model.SmsDeliveryNotification
 import com.example.data.model.UserProfileEntity
 import com.example.ui.components.CourierManagementDialog
+import com.example.ui.components.EmergencyContactDirectCard
 import com.example.ui.components.InvoiceDialog
 import com.example.ui.components.PharmacistRegistrationDialog
+import com.example.ui.components.SecuritySettingsTab
+import com.example.ui.components.UserProfileDirectCard
 import com.example.ui.theme.BorderSoft
 import com.example.ui.theme.DutyPharmacyBg
 import com.example.ui.theme.DutyPharmacyOrange
@@ -141,11 +153,14 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
+    val isUserAuthenticated by viewModel.isUserAuthenticated.collectAsStateWithLifecycle()
     val deliveryAddresses by viewModel.deliveryAddresses.collectAsStateWithLifecycle()
     val orders by viewModel.orders.collectAsStateWithLifecycle()
     val prescriptions by viewModel.prescriptions.collectAsStateWithLifecycle()
     val pharmacists by viewModel.pharmacists.collectAsStateWithLifecycle()
     val couriers by viewModel.couriers.collectAsStateWithLifecycle()
+    val smsNotifications by viewModel.smsNotifications.collectAsStateWithLifecycle()
 
     var activeMenuIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -210,6 +225,26 @@ fun ProfileScreen(
             iconBg = MedicalTealLight,
             countBadge = if (orders.isNotEmpty()) "${orders.size} facture(s)" else "0 facture",
             testTag = "profile_tab_4"
+        ),
+        ProfileMenuItem(
+            index = 5,
+            title = "Guide Débutant & FAQ Santé",
+            subtitle = "Usage des médicaments, ordonnances & procédure de commande",
+            icon = Icons.AutoMirrored.Filled.HelpOutline,
+            iconTint = SafeBlueSecondary,
+            iconBg = SafeBlueLight,
+            countBadge = "Aide & Guide",
+            testTag = "profile_tab_5"
+        ),
+        ProfileMenuItem(
+            index = 6,
+            title = "Paramètres & Sécurité Anti-Piratage",
+            subtitle = "Chiffrement matériel AES-256, biométrie & protection TEE",
+            icon = Icons.Default.Shield,
+            iconTint = VerifiedBadgeGreen,
+            iconBg = VerifiedBadgeBg,
+            countBadge = "Sécurisé",
+            testTag = "profile_tab_6"
         )
     )
 
@@ -288,12 +323,40 @@ fun ProfileScreen(
                     // Profile Hero Header Card
                     ProfileHeroCard(
                         profile = userProfile,
+                        currentUser = currentUser,
                         ordersCount = orders.size,
                         prescriptionsCount = prescriptions.size,
                         addressesCount = deliveryAddresses.size,
                         pharmacistsCount = pharmacists.size,
-                        couriersCount = couriers.size
+                        couriersCount = couriers.size,
+                        onOpenAuth = { viewModel.openAuthDialog() },
+                        onSignOut = {
+                            viewModel.signOutUser {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("Déconnexion effectuée avec succès.")
+                                }
+                            }
+                        }
                     )
+
+                    // Section 1: Mon Profil (Données directes de l'utilisateur)
+                    UserProfileDirectCard(
+                        profile = userProfile,
+                        currentUser = currentUser,
+                        onEditProfile = { activeMenuIndex = 0 },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Section 2: Contact d'Urgence (Appel direct SOS & Alerte SMS)
+                    EmergencyContactDirectCard(
+                        profile = userProfile,
+                        onEditContact = { activeMenuIndex = 0 },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     // Vertical Menu Section Header
                     Column(
@@ -305,14 +368,14 @@ fun ProfileScreen(
                             text = "RUBRIQUES & GESTION DU COMPTE",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MedicalTealDark,
+                            color = Color.White,
                             letterSpacing = 0.5.sp
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Sélectionnez une rubrique pour consulter ou modifier vos informations",
                             fontSize = 11.sp,
-                            color = TextSecondaryMuted
+                            color = Color.White.copy(alpha = 0.85f)
                         )
                     }
 
@@ -365,13 +428,13 @@ fun ProfileScreen(
                                             text = item.title,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = TextPrimaryDark
+                                            color = Color.White
                                         )
                                         Spacer(modifier = Modifier.height(3.dp))
                                         Text(
                                             text = item.subtitle,
                                             fontSize = 12.sp,
-                                            color = TextSecondaryMuted,
+                                            color = Color.White.copy(alpha = 0.85f),
                                             lineHeight = 16.sp
                                         )
                                     }
@@ -445,7 +508,19 @@ fun ProfileScreen(
                     0 -> {
                         ContactInformationTab(
                             profile = userProfile,
-                            onSaveContact = { fullName, email, phone, secPhone, emerName, emerPhone, blood, allergies, paymentMethod, medNotes ->
+                            currentUser = currentUser,
+                            onOpenAuth = { viewModel.openAuthDialog() },
+                            onSignOut = {
+                                viewModel.signOutUser {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("Déconnexion effectuée.")
+                                    }
+                                }
+                            },
+                            onResetPassword = { email, onSuccess, onError ->
+                                viewModel.sendPasswordReset(email, onSuccess, onError)
+                            },
+                            onSaveContact = { fullName, email, phone, secPhone, emerName, emerPhone, blood, allergies, paymentMethod, medNotes, role ->
                                 viewModel.updateContactDetails(
                                     fullName = fullName,
                                     email = email,
@@ -457,9 +532,10 @@ fun ProfileScreen(
                                     knownAllergies = allergies,
                                     preferredPaymentMethod = paymentMethod,
                                     medicalNotes = medNotes,
+                                    userRole = role,
                                     onSuccess = {
                                         coroutineScope.launch {
-                                            snackbarHostState.showSnackbar("Coordonnées et profil enregistrés avec succès !")
+                                            snackbarHostState.showSnackbar("Coordonnées et profil médical enregistrés avec succès !")
                                         }
                                     }
                                 )
@@ -523,6 +599,7 @@ fun ProfileScreen(
                     4 -> {
                         InvoicesTab(
                             orders = orders,
+                            smsNotifications = smsNotifications,
                             onViewInvoice = { order ->
                                 selectedOrderForInvoice = order
                             },
@@ -532,6 +609,51 @@ fun ProfileScreen(
                             onSendSms = { order ->
                                 viewModel.triggerInvoiceSms(order)
                                 InvoicePrinterHelper.shareInvoiceSmsIntent(context, order)
+                            },
+                            onDeleteSms = { smsId ->
+                                viewModel.deleteSmsNotification(smsId)
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("SMS supprimé avec succès")
+                                }
+                            },
+                            onDeleteBillingSmsForOrder = { orderId ->
+                                viewModel.deleteBillingSms(orderId)
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("SMS de facturation supprimé")
+                                }
+                            },
+                            onDeleteAllBillingSms = {
+                                viewModel.deleteAllBillingSms()
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("Tous les SMS de facturation ont été supprimés")
+                                }
+                            },
+                            onClearAllSms = {
+                                viewModel.clearAllSms()
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("Tous les SMS ont été supprimés")
+                                }
+                            }
+                        )
+                    }
+                    5 -> {
+                        FaqScreen(
+                            onBack = { activeMenuIndex = null },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    6 -> {
+                        SecuritySettingsTab(
+                            profile = userProfile,
+                            currentUser = currentUser,
+                            biometricAuthManager = viewModel.biometricAuthManager,
+                            onLockSession = {
+                                viewModel.lockSession()
+                            },
+                            onShowMessage = { msg ->
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(msg)
+                                }
                             }
                         )
                     }
@@ -693,18 +815,39 @@ fun ProfileScreen(
 @Composable
 private fun ProfileHeroCard(
     profile: UserProfileEntity?,
+    currentUser: AuthUser?,
     ordersCount: Int,
     prescriptionsCount: Int,
     addressesCount: Int,
     pharmacistsCount: Int,
-    couriersCount: Int
+    couriersCount: Int,
+    onOpenAuth: () -> Unit,
+    onSignOut: () -> Unit
 ) {
-    val name = if (profile != null && profile.fullName.isNotBlank()) profile.fullName else "Espace Utilisateur & Pro"
-    val email = if (profile != null && profile.email.isNotBlank()) profile.email else "Profil non configuré"
-    val phone = if (profile != null && profile.phoneNumber.isNotBlank()) profile.phoneNumber else "Ajoutez vos coordonnées ci-dessous"
+    val isAuthenticated = currentUser != null || (profile != null && profile.firebaseUid.isNotBlank())
+    val name = when {
+        currentUser?.displayName?.isNotBlank() == true -> currentUser.displayName
+        profile != null && profile.fullName.isNotBlank() -> profile.fullName
+        else -> "Utilisateur Invité"
+    }
+    val email = when {
+        currentUser?.email?.isNotBlank() == true -> currentUser.email
+        profile != null && profile.email.isNotBlank() -> profile.email
+        else -> "Compte non synchronisé"
+    }
+    val phone = when {
+        currentUser?.phoneNumber?.isNotBlank() == true -> currentUser.phoneNumber
+        profile != null && profile.phoneNumber.isNotBlank() -> profile.phoneNumber
+        else -> "Ajoutez vos coordonnées de contact"
+    }
+    val role = when {
+        currentUser?.role?.isNotBlank() == true -> currentUser.role
+        profile != null && profile.userRole.isNotBlank() -> profile.userRole
+        else -> "Patient / Client"
+    }
 
-    val initials = if (profile != null && profile.fullName.isNotBlank()) {
-        profile.fullName.split(" ")
+    val initials = if (name.isNotBlank()) {
+        name.split(" ")
             .filter { it.isNotBlank() }
             .mapNotNull { it.firstOrNull()?.uppercaseChar() }
             .take(2)
@@ -715,8 +858,9 @@ private fun ProfileHeroCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(16.dp),
+            .padding(16.dp)
+            .testTag("profile_hero_card"),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -724,11 +868,12 @@ private fun ProfileHeroCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(58.dp)
                         .clip(CircleShape)
                         .background(
                             Brush.linearGradient(
-                                listOf(MedicalTealPrimary, MedicalTealDark)
+                                if (isAuthenticated) listOf(MedicalTealPrimary, MedicalTealDark)
+                                else listOf(SafeBlueSecondary, Color(0xFF1E3A8A))
                             )
                         ),
                     contentAlignment = Alignment.Center
@@ -749,24 +894,114 @@ private fun ProfileHeroCard(
                             text = name,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimaryDark
+                            color = Color.White
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
-                            imageVector = Icons.Default.VerifiedUser,
-                            contentDescription = "Certifié",
-                            tint = VerifiedBadgeGreen,
+                            imageVector = if (isAuthenticated) Icons.Default.VerifiedUser else Icons.Default.Person,
+                            contentDescription = if (isAuthenticated) "Compte Sécurisé" else "Invité",
+                            tint = if (isAuthenticated) VerifiedBadgeGreen else Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.size(16.dp)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(text = email, fontSize = 12.sp, color = TextSecondaryMuted)
+                    Text(text = email, fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
                     Text(text = phone, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MedicalTealPrimary)
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isAuthenticated) VerifiedBadgeBg else MaterialTheme.colorScheme.surfaceVariant)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = if (isAuthenticated) "Firebase Connecté • $role" else "Mode Invité • $role",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isAuthenticated) VerifiedBadgeGreen else TextSecondaryMuted
+                            )
+                        }
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
+
+            // Auth Quick Action Banner
+            if (!isAuthenticated) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = SafeBlueLight)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Sécurisez votre espace santé",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SafeBlueSecondary
+                            )
+                            Text(
+                                text = "Sauvegardez vos ordonnances et vos adresses",
+                                fontSize = 11.sp,
+                                color = SafeBlueSecondary.copy(alpha = 0.85f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = onOpenAuth,
+                            modifier = Modifier.height(36.dp).testTag("btn_hero_login"),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = SafeBlueSecondary),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Icon(Icons.Default.Login, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Connexion", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onOpenAuth,
+                        modifier = Modifier.height(34.dp).testTag("btn_switch_auth"),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Changer de compte", fontSize = 11.sp)
+                    }
+
+                    TextButton(
+                        onClick = onSignOut,
+                        modifier = Modifier.height(34.dp).testTag("btn_hero_signout"),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Déconnexion", fontSize = 11.sp, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
             HorizontalDivider(color = Color(0xFFEEEEEE))
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -795,6 +1030,10 @@ private fun ProfileStatBadge(count: String, label: String, color: Color) {
 @Composable
 private fun ContactInformationTab(
     profile: UserProfileEntity?,
+    currentUser: AuthUser?,
+    onOpenAuth: () -> Unit,
+    onSignOut: () -> Unit,
+    onResetPassword: (email: String, onSuccess: (String) -> Unit, onError: (String) -> Unit) -> Unit,
     onSaveContact: (
         fullName: String,
         email: String,
@@ -805,12 +1044,19 @@ private fun ContactInformationTab(
         bloodGroup: String,
         allergies: String,
         paymentMethod: String,
-        medicalNotes: String
+        medicalNotes: String,
+        userRole: String
     ) -> Unit
 ) {
-    var fullName by remember(profile) { mutableStateOf(profile?.fullName ?: "") }
-    var email by remember(profile) { mutableStateOf(profile?.email ?: "") }
-    var phone by remember(profile) { mutableStateOf(profile?.phoneNumber ?: "") }
+    var fullName by remember(profile, currentUser) {
+        mutableStateOf(currentUser?.displayName ?: profile?.fullName ?: "")
+    }
+    var email by remember(profile, currentUser) {
+        mutableStateOf(currentUser?.email ?: profile?.email ?: "")
+    }
+    var phone by remember(profile, currentUser) {
+        mutableStateOf(currentUser?.phoneNumber ?: profile?.phoneNumber ?: "")
+    }
     var secondaryPhone by remember(profile) { mutableStateOf(profile?.secondaryPhone ?: "") }
     var emergencyName by remember(profile) { mutableStateOf(profile?.emergencyContactName ?: "") }
     var emergencyPhone by remember(profile) { mutableStateOf(profile?.emergencyContactPhone ?: "") }
@@ -818,12 +1064,21 @@ private fun ContactInformationTab(
     var allergies by remember(profile) { mutableStateOf(profile?.knownAllergies ?: "") }
     var paymentMethod by remember(profile) { mutableStateOf(profile?.preferredPaymentMethod ?: "Wave Mobile Money") }
     var medicalNotes by remember(profile) { mutableStateOf(profile?.medicalNotes ?: "") }
+    var userRole by remember(profile, currentUser) {
+        mutableStateOf(currentUser?.role ?: profile?.userRole ?: "Patient / Client")
+    }
 
+    val rolesList = listOf("Patient / Client", "Pharmacien Diplômé", "Livreur Partenaire")
     val bloodGroups = listOf("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Non déterminé")
     val paymentMethods = listOf("Wave Mobile Money", "Orange Money", "Free Money", "MTN MoMo", "Carte Bancaire (Visa/Mastercard)")
 
     var bloodDropdownExpanded by remember { mutableStateOf(false) }
     var paymentDropdownExpanded by remember { mutableStateOf(false) }
+
+    var passwordResetStatus by remember { mutableStateOf<String?>(null) }
+    var passwordResetError by remember { mutableStateOf<String?>(null) }
+
+    val isAuthenticated = currentUser != null || (profile != null && profile.firebaseUid.isNotBlank())
 
     Column(
         modifier = Modifier
@@ -831,6 +1086,157 @@ private fun ContactInformationTab(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        // Section Firebase Auth Status Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("firebase_auth_status_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = if (isAuthenticated) VerifiedBadgeBg else SafeBlueLight)
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (isAuthenticated) Icons.Default.Verified else Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = if (isAuthenticated) VerifiedBadgeGreen else SafeBlueSecondary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = if (isAuthenticated) "Compte Firebase Auth Vérifié" else "Authentification Firebase Requise",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = if (isAuthenticated) VerifiedBadgeGreen else SafeBlueSecondary
+                            )
+                            Text(
+                                text = if (isAuthenticated) "UID: ${(currentUser?.uid ?: profile?.firebaseUid)?.take(14)}..." else "Connectez-vous pour protéger vos données",
+                                fontSize = 11.sp,
+                                color = TextSecondaryMuted
+                            )
+                        }
+                    }
+
+                    if (!isAuthenticated) {
+                        Button(
+                            onClick = onOpenAuth,
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
+                            modifier = Modifier.height(34.dp)
+                        ) {
+                            Text("Connexion", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                if (isAuthenticated) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    HorizontalDivider(color = BorderSoft)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = {
+                                if (email.isNotBlank()) {
+                                    onResetPassword(
+                                        email,
+                                        { msg ->
+                                            passwordResetStatus = msg
+                                            passwordResetError = null
+                                        },
+                                        { err ->
+                                            passwordResetError = err
+                                            passwordResetStatus = null
+                                        }
+                                    )
+                                } else {
+                                    passwordResetError = "Email non renseigné"
+                                }
+                            },
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(Icons.Default.LockReset, contentDescription = null, modifier = Modifier.size(16.dp), tint = SafeBlueSecondary)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Réinitialiser mot de passe", fontSize = 11.sp, color = SafeBlueSecondary, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        TextButton(
+                            onClick = onSignOut,
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Déconnexion", fontSize = 11.sp, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    passwordResetStatus?.let {
+                        Text(text = it, fontSize = 11.sp, color = VerifiedBadgeGreen, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+                    }
+                    passwordResetError?.let {
+                        Text(text = it, fontSize = 11.sp, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 4.dp))
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Role Selector Section
+        Text(
+            text = "Rôle & Statut de l'Utilisateur",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MedicalTealPrimary
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            rolesList.forEach { role ->
+                val isSelected = userRole == role
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isSelected) MedicalTealPrimary else MaterialTheme.colorScheme.surfaceVariant)
+                        .border(
+                            width = 1.dp,
+                            color = if (isSelected) MedicalTealPrimary else BorderSoft,
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        .clickable { userRole = role }
+                        .padding(vertical = 10.dp, horizontal = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = when (role) {
+                            "Patient / Client" -> "Patient"
+                            "Pharmacien Diplômé" -> "Pharmacien"
+                            else -> "Livreur"
+                        },
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) Color.White else TextPrimaryDark,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = "Informations Personnelles & Contact",
             style = MaterialTheme.typography.titleSmall,
@@ -850,7 +1256,7 @@ private fun ContactInformationTab(
                     value = fullName,
                     onValueChange = { fullName = it },
                     label = { Text("Nom et prénom") },
-                    placeholder = { Text("Ex: Dr. Mamadou Dramé") },
+                    placeholder = { Text("Ex: Nom et Prénom") },
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MedicalTealPrimary) },
                     modifier = Modifier.fillMaxWidth().testTag("input_profile_name"),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -867,7 +1273,7 @@ private fun ContactInformationTab(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Adresse Email") },
-                    placeholder = { Text("Ex: drame678mamadou@gmail.com") },
+                    placeholder = { Text("Ex: patient@pharmaexpress.sn") },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MedicalTealPrimary) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth().testTag("input_profile_email"),
@@ -885,7 +1291,7 @@ private fun ContactInformationTab(
                     value = phone,
                     onValueChange = { phone = it },
                     label = { Text("Téléphone principal (Wave / SMS)") },
-                    placeholder = { Text("Ex: +221 77 000 00 00") },
+                    placeholder = { Text("Numéro de contact") },
                     leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = MedicalTealPrimary) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     modifier = Modifier.fillMaxWidth().testTag("input_profile_phone"),
@@ -984,7 +1390,8 @@ private fun ContactInformationTab(
                     bloodGroup.trim(),
                     allergies.trim(),
                     paymentMethod.trim(),
-                    medicalNotes.trim()
+                    medicalNotes.trim(),
+                    userRole.trim()
                 )
             },
             modifier = Modifier
@@ -1482,147 +1889,473 @@ private fun CouriersTab(
 @Composable
 private fun InvoicesTab(
     orders: List<OrderEntity>,
+    smsNotifications: List<SmsDeliveryNotification>,
     onViewInvoice: (OrderEntity) -> Unit,
     onPrintInvoice: (OrderEntity) -> Unit,
-    onSendSms: (OrderEntity) -> Unit
+    onSendSms: (OrderEntity) -> Unit,
+    onDeleteSms: (String) -> Unit,
+    onDeleteBillingSmsForOrder: (String) -> Unit,
+    onDeleteAllBillingSms: () -> Unit,
+    onClearAllSms: () -> Unit
 ) {
+    var selectedSection by remember { mutableIntStateOf(0) } // 0: Factures, 1: SMS reçus
+    var showDeleteAllSmsConfirmDialog by remember { mutableStateOf(false) }
+
+    val billingSmsList = remember(smsNotifications) {
+        smsNotifications.filter { sms ->
+            sms.sender.contains("PAY", ignoreCase = true) ||
+            sms.orderNumber.startsWith("FACT-") ||
+            sms.messageText.contains("Facture", ignoreCase = true) ||
+            sms.messageText.contains("régler", ignoreCase = true) ||
+            sms.messageText.contains("Paiement", ignoreCase = true)
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Header Banner with White Text
         item {
-            Column {
-                Text(
-                    text = "Factures Électroniques Certifiées",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimaryDark
-                )
-                Text(
-                    text = "Impression A4 & Envoi direct par SMS sur téléphone",
-                    fontSize = 11.sp,
-                    color = TextSecondaryMuted
-                )
-            }
-        }
-
-        if (orders.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = MedicalTealPrimary
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Factures Certifiées & Liens SMS",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Reçus conformes, impression A4 & suppression des SMS",
+                                fontSize = 12.sp,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
                         Icon(
                             imageVector = Icons.Default.ReceiptLong,
                             contentDescription = null,
-                            tint = MedicalTealPrimary,
-                            modifier = Modifier.size(48.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
                         )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text("Aucune facture pour le moment", fontWeight = FontWeight.Bold, color = TextPrimaryDark)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Vos factures de commandes confirmées apparaîtront ici automatiquement avec possibilité d'impression et de réception SMS.",
-                            fontSize = 12.sp,
-                            color = TextSecondaryMuted,
-                            textAlign = TextAlign.Center
-                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = Color.White.copy(alpha = 0.2f)
+                        ) {
+                            Text(
+                                text = "${orders.size} Facture(s)",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = Color.White.copy(alpha = 0.2f)
+                        ) {
+                            Text(
+                                text = "${smsNotifications.size} SMS reçu(s)",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
                     }
                 }
             }
-        } else {
-            items(orders) { order ->
-                val dateStr = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(Date(order.orderTimestamp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        }
+
+        // Section Selector Tabs
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = { selectedSection = 0 },
+                    modifier = Modifier.weight(1f).height(40.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedSection == 0) MedicalTealPrimary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (selectedSection == 0) Color.White else TextPrimaryDark
+                    )
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Icon(Icons.Default.ReceiptLong, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Factures (${orders.size})",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Button(
+                    onClick = { selectedSection = 1 },
+                    modifier = Modifier.weight(1f).height(40.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedSection == 1) MedicalTealPrimary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (selectedSection == 1) Color.White else TextPrimaryDark
+                    )
+                ) {
+                    Icon(Icons.Default.Sms, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Liens SMS (${smsNotifications.size})",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        // Quick SMS Action Bar when viewing SMS tab or if SMS exist
+        if (selectedSection == 1 && smsNotifications.isNotEmpty()) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (billingSmsList.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = onDeleteAllBillingSms,
+                            modifier = Modifier.weight(1f).height(38.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
                         ) {
-                            Column {
-                                Text(order.orderNumber, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MedicalTealDark)
-                                Text(dateStr, fontSize = 11.sp, color = TextSecondaryMuted)
-                            }
+                            Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Supprimer SMS Factures", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Button(
+                        onClick = { showDeleteAllSmsConfirmDialog = true },
+                        modifier = Modifier.weight(1f).height(38.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Vider tous les SMS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+            }
+        }
+
+        // Section 0: Factures
+        if (selectedSection == 0) {
+            if (orders.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ReceiptLong,
+                                contentDescription = null,
+                                tint = MedicalTealPrimary,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text("Aucune facture pour le moment", fontWeight = FontWeight.Bold, color = TextPrimaryDark)
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "${order.totalFcfa} FCFA",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 15.sp,
-                                color = MedicalTealPrimary
+                                text = "Vos factures de commandes confirmées apparaîtront ici automatiquement avec possibilité d'impression et de réception SMS.",
+                                fontSize = 12.sp,
+                                color = TextSecondaryMuted,
+                                textAlign = TextAlign.Center
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Pharmacie: ${order.pharmacyName}",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimaryDark
-                        )
-                        Text(
-                            text = "Articles: ${order.itemsSummary}",
-                            fontSize = 11.sp,
-                            color = TextSecondaryMuted,
-                            maxLines = 2
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = { onViewInvoice(order) },
-                                modifier = Modifier.weight(1f).height(38.dp),
-                                shape = RoundedCornerShape(8.dp)
+                    }
+                }
+            } else {
+                items(orders) { order ->
+                    val dateStr = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(Date(order.orderTimestamp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Default.ReceiptLong, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Voir Reçu", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Column {
+                                    Text(order.orderNumber, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimaryDark)
+                                    Text(dateStr, fontSize = 11.sp, color = TextSecondaryMuted)
+                                }
+                                Text(
+                                    "${order.totalFcfa} FCFA",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 15.sp,
+                                    color = MedicalTealPrimary
+                                )
                             }
 
-                            Button(
-                                onClick = { onPrintInvoice(order) },
-                                modifier = Modifier.weight(1f).height(38.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MedicalTealDark)
-                            ) {
-                                Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Imprimer", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Pharmacie: ${order.pharmacyName}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimaryDark
+                            )
+                            Text(
+                                text = "Articles: ${order.itemsSummary}",
+                                fontSize = 11.sp,
+                                color = TextSecondaryMuted,
+                                maxLines = 2
+                            )
 
-                            Button(
-                                onClick = { onSendSms(order) },
-                                modifier = Modifier.weight(1f).height(38.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary)
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(Icons.Default.Sms, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("SMS", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                OutlinedButton(
+                                    onClick = { onViewInvoice(order) },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(Icons.Default.ReceiptLong, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Reçu", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                Button(
+                                    onClick = { onPrintInvoice(order) },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MedicalTealPrimary,
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Icon(Icons.Default.Print, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Imprimer", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+
+                                Button(
+                                    onClick = { onSendSms(order) },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MedicalTealPrimary,
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Icon(Icons.Default.Sms, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("SMS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+
+                                IconButton(
+                                    onClick = { onDeleteBillingSmsForOrder(order.id) },
+                                    modifier = Modifier.size(38.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Supprimer SMS lié",
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
+        // Section 1: SMS reçus et Liens SMS
+        if (selectedSection == 1) {
+            if (smsNotifications.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Sms,
+                                contentDescription = null,
+                                tint = MedicalTealPrimary,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text("Aucun SMS de facturation", fontWeight = FontWeight.Bold, color = TextPrimaryDark)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Les SMS de facturation, reçus officiels et notifications de livraison apparaîtront ici avec possibilité de suppression.",
+                                fontSize = 12.sp,
+                                color = TextSecondaryMuted,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(smsNotifications, key = { it.id }) { sms ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = if (sms.sender.contains("PAY", true)) Color(0xFFEFF6FF) else Color(0xFFECFDF5)
+                                    ) {
+                                        Text(
+                                            text = sms.sender,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (sms.sender.contains("PAY", true)) SafeBlueSecondary else VerifiedBadgeGreen,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = sms.orderNumber,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = TextSecondaryMuted
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = { onDeleteSms(sms.id) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Supprimer ce SMS",
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = sms.messageText,
+                                fontSize = 12.sp,
+                                color = TextPrimaryDark,
+                                lineHeight = 17.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Reçu le: ${sms.timestamp}",
+                                    fontSize = 10.5.sp,
+                                    color = TextSecondaryMuted
+                                )
+
+                                Button(
+                                    onClick = { onDeleteSms(sms.id) },
+                                    shape = RoundedCornerShape(6.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFFEE2E2),
+                                        contentColor = Color(0xFFDC2626)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(28.dp)
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(12.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Supprimer", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         item { Spacer(modifier = Modifier.height(20.dp)) }
+    }
+
+    if (showDeleteAllSmsConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllSmsConfirmDialog = false },
+            title = { Text("Supprimer tous les SMS ?", fontWeight = FontWeight.Bold) },
+            text = { Text("Voulez-vous vraiment effacer l'historique complet des SMS de facturation et de livraison ?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onClearAllSms()
+                        showDeleteAllSmsConfirmDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Oui, tout supprimer", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllSmsConfirmDialog = false }) {
+                    Text("Annuler")
+                }
+            }
+        )
     }
 }
 
