@@ -84,6 +84,9 @@ import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteMuted
 import com.example.ui.theme.VerifiedBadgeGreen
 
 @Composable
@@ -179,13 +182,13 @@ fun SmsDeliveryAlertDialog(
                                     text = "Destinataire: ${sms.recipientPhone}",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimaryDark
+                                    color = TextOnWhitePrimary
                                 )
                             }
                             Text(
                                 text = sms.timestamp,
                                 fontSize = 10.sp,
-                                color = TextSecondaryMuted
+                                color = TextOnWhiteMuted
                             )
                         }
 
@@ -196,7 +199,7 @@ fun SmsDeliveryAlertDialog(
                         Text(
                             text = sms.messageText,
                             fontSize = 12.sp,
-                            color = TextPrimaryDark,
+                            color = TextOnWhitePrimary,
                             lineHeight = 18.sp,
                             fontFamily = FontFamily.SansSerif
                         )
@@ -454,7 +457,7 @@ fun SmsInboxBottomSheet(
                         Text(
                             text = "Choisissez un scénario de notification SMS certifiée à simuler via le service Android :",
                             fontSize = 11.sp,
-                            color = TextSecondaryMuted
+                            color = TextOnWhiteSecondary
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -614,7 +617,7 @@ fun SmsItemCard(
                     Text(
                         text = sms.timestamp,
                         fontSize = 10.sp,
-                        color = TextSecondaryMuted
+                        color = TextOnWhiteMuted
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
@@ -636,7 +639,7 @@ fun SmsItemCard(
             Text(
                 text = sms.messageText,
                 fontSize = 12.sp,
-                color = TextPrimaryDark,
+                color = TextOnWhitePrimary,
                 lineHeight = 17.sp
             )
 
@@ -652,7 +655,7 @@ fun SmsItemCard(
                 Text(
                     text = "Destinataire : ${sms.recipientPhone}",
                     fontSize = 10.sp,
-                    color = TextSecondaryMuted
+                    color = TextOnWhiteSecondary
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

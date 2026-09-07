@@ -92,6 +92,9 @@ import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteMuted
 import com.example.ui.theme.VerifiedBadgeGreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -275,7 +278,7 @@ fun BiometricPromptDialog(
                         Text(
                             text = reason,
                             fontSize = 12.sp,
-                            color = TextPrimaryDark,
+                            color = TextOnWhitePrimary,
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -305,11 +308,23 @@ fun BiometricPromptDialog(
                             selectedTab = 0
                             authError = null
                         },
+                        selectedContentColor = MedicalTealPrimary,
+                        unselectedContentColor = TextOnWhiteSecondary,
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Fingerprint, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(
+                                    Icons.Default.Fingerprint,
+                                    contentDescription = null,
+                                    tint = if (selectedTab == 0) MedicalTealPrimary else TextOnWhiteSecondary,
+                                    modifier = Modifier.size(16.dp)
+                                )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Empreinte / Face ID", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "Empreinte / Face ID",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selectedTab == 0) MedicalTealPrimary else TextOnWhiteSecondary
+                                )
                             }
                         }
                     )
@@ -319,11 +334,23 @@ fun BiometricPromptDialog(
                             selectedTab = 1
                             authError = null
                         },
+                        selectedContentColor = MedicalTealPrimary,
+                        unselectedContentColor = TextOnWhiteSecondary,
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Pin, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(
+                                    Icons.Default.Pin,
+                                    contentDescription = null,
+                                    tint = if (selectedTab == 1) MedicalTealPrimary else TextOnWhiteSecondary,
+                                    modifier = Modifier.size(16.dp)
+                                )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Code PIN", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "Code PIN",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selectedTab == 1) MedicalTealPrimary else TextOnWhiteSecondary
+                                )
                             }
                         }
                     )
@@ -399,27 +426,40 @@ fun BiometricPromptDialog(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        Text(
-                            text = when {
-                                isSuccessAnimation -> "Identité biométrique confirmée !"
-                                isAuthenticating -> "Capteur d'empreintes actif • Posez votre doigt sur le capteur"
-                                biometricStatus == BiometricStatus.AVAILABLE -> "Capteur d'empreintes relié • Touchez pour valider"
-                                biometricStatus == BiometricStatus.NOT_ENROLLED -> "Capteur présent • Aucune empreinte enregistrée"
-                                else -> "Capteur d'empreintes prêt • Touchez pour valider"
-                            },
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = if (isSuccessAnimation) VerifiedBadgeGreen else TextPrimaryDark,
-                            textAlign = TextAlign.Center
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFFF8FAFC),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = when {
+                                        isSuccessAnimation -> "Identité biométrique confirmée !"
+                                        isAuthenticating -> "Capteur d'empreintes actif • Posez votre doigt sur le capteur"
+                                        biometricStatus == BiometricStatus.AVAILABLE -> "Capteur d'empreintes relié • Touchez pour valider"
+                                        biometricStatus == BiometricStatus.NOT_ENROLLED -> "Capteur présent • Aucune empreinte enregistrée"
+                                        else -> "Capteur d'empreintes prêt • Touchez pour valider"
+                                    },
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = if (isSuccessAnimation) VerifiedBadgeGreen else TextOnWhitePrimary,
+                                    textAlign = TextAlign.Center
+                                )
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
 
-                        Text(
-                            text = "Authentification matérielle directe sur votre téléphone",
-                            fontSize = 11.sp,
-                            color = TextSecondaryMuted
-                        )
+                                Text(
+                                    text = "Authentification matérielle directe sur votre téléphone",
+                                    fontSize = 11.sp,
+                                    color = TextOnWhiteSecondary,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
 
                         if (authError != null) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -443,29 +483,37 @@ fun BiometricPromptDialog(
                                 .height(44.dp)
                                 .testTag("btn_verify_biometric_action")
                         ) {
-                            Icon(Icons.Default.Fingerprint, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Fingerprint, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Activer le capteur d'empreinte", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("Activer le capteur d'empreinte", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
 
                         if (biometricStatus == BiometricStatus.NOT_ENROLLED || authError?.contains("enregistr") == true) {
                             Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedButton(
-                                onClick = { biometricAuthManager.openBiometricEnrollment(context) },
+                            Surface(
                                 shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFFF8FAFC),
+                                border = BorderStroke(1.dp, MedicalTealPrimary.copy(alpha = 0.6f)),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(42.dp)
+                                    .clickable { biometricAuthManager.openBiometricEnrollment(context) }
                                     .testTag("btn_enroll_biometric_device")
                             ) {
-                                Icon(Icons.Default.Fingerprint, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    "Enregistrer une empreinte sur l'appareil",
-                                    color = MedicalTealPrimary,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Fingerprint, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        "Enregistrer une empreinte sur l'appareil",
+                                        color = MedicalTealDark,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    )
+                                }
                             }
                         }
                     }
@@ -477,40 +525,53 @@ fun BiometricPromptDialog(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "Entrez votre Code PIN Sécurité",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = TextPrimaryDark
-                        )
-                        Text(
-                            text = if (bioConfig.securityPin.isNotBlank()) "Code secret à 4 chiffres" else "Aucun code PIN configuré",
-                            fontSize = 11.sp,
-                            color = TextSecondaryMuted
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // PIN visual dots
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFFF8FAFC),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            for (i in 0 until 4) {
-                                val isFilled = enteredPin.length > i
-                                Box(
-                                    modifier = Modifier
-                                        .size(16.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isFilled) MedicalTealPrimary else Color(0xFFE2E8F0)
-                                        )
-                                        .border(
-                                            1.dp,
-                                            if (isFilled) MedicalTealPrimary else Color(0xFFCBD5E1),
-                                            CircleShape
-                                        )
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Entrez votre Code PIN Sécurité",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = TextOnWhitePrimary
                                 )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = if (bioConfig.securityPin.isNotBlank()) "Code secret à 4 chiffres" else "Aucun code PIN configuré",
+                                    fontSize = 11.sp,
+                                    color = TextOnWhiteSecondary
+                                )
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                // PIN visual dots
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    for (i in 0 until 4) {
+                                        val isFilled = enteredPin.length > i
+                                        Box(
+                                            modifier = Modifier
+                                                .size(18.dp)
+                                                .clip(CircleShape)
+                                                .background(
+                                                    if (isFilled) MedicalTealPrimary else Color(0xFFE2E8F0)
+                                                )
+                                                .border(
+                                                    1.5.dp,
+                                                    if (isFilled) MedicalTealPrimary else Color(0xFF94A3B8),
+                                                    CircleShape
+                                                )
+                                        )
+                                    }
+                                }
                             }
                         }
 
@@ -536,7 +597,7 @@ fun BiometricPromptDialog(
 
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth(0.85f)
+                            modifier = Modifier.fillMaxWidth(0.88f)
                         ) {
                             keys.forEach { row ->
                                 Row(
@@ -551,10 +612,17 @@ fun BiometricPromptDialog(
                                                 "DEL" -> Color(0xFFF1F5F9)
                                                 else -> Color(0xFFF8FAFC)
                                             },
-                                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                                            border = BorderStroke(
+                                                1.dp,
+                                                when (key) {
+                                                    "C" -> Color(0xFFFECACA)
+                                                    "DEL" -> Color(0xFFCBD5E1)
+                                                    else -> Color(0xFFCBD5E1)
+                                                }
+                                            ),
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .height(44.dp)
+                                                .height(46.dp)
                                                 .clickable {
                                                     authError = null
                                                     when (key) {
@@ -582,13 +650,18 @@ fun BiometricPromptDialog(
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
                                                 if (key == "DEL") {
-                                                    Icon(Icons.Default.Backspace, contentDescription = "Effacer", tint = TextSecondaryMuted, modifier = Modifier.size(16.dp))
+                                                    Icon(
+                                                        Icons.Default.Backspace,
+                                                        contentDescription = "Effacer",
+                                                        tint = TextOnWhitePrimary,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
                                                 } else {
                                                     Text(
                                                         text = key,
-                                                        fontSize = 16.sp,
+                                                        fontSize = 18.sp,
                                                         fontWeight = FontWeight.Bold,
-                                                        color = if (key == "C") Color(0xFFDC2626) else TextPrimaryDark
+                                                        color = if (key == "C") Color(0xFFDC2626) else TextOnWhitePrimary
                                                     )
                                                 }
                                             }

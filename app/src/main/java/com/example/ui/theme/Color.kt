@@ -42,3 +42,11 @@ val WaveBlueColor = Color(0xFF1DA1F2)
 val MtnMomoYellow = Color(0xFFFFB703)
 val VisaBlueColor = Color(0xFF1A1F71)
 val EscrowGreenColor = Color(0xFF00875A)
+
+// High-contrast text colors for white stamps, white receipts, badges and light containers
+val TextOnWhitePrimary = Color(0xFF0F172A)     // Deep slate black (maximum contrast on white)
+val TextOnWhiteSecondary = Color(0xFF334155)   // High contrast slate gray on white
+val TextOnWhiteMuted = Color(0xFF64748B)       // Visible medium slate on white
+val TextOnWhiteTeal = Color(0xFF004D34)        // Deep official medical emerald on white
+val TextOnWhiteOrange = Color(0xFF9A3412)      // Deep orange on light background
+val TextOnWhiteBlue = Color(0xFF0369A1)        // Deep blue on light background

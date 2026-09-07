@@ -53,6 +53,10 @@ import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteMuted
+import com.example.ui.theme.TextOnWhiteTeal
 import com.example.ui.theme.VerifiedBadgeGreen
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -153,12 +157,12 @@ fun InvoiceDialog(
                                     text = order.pharmacyName,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
-                                    color = TextPrimaryDark
+                                    color = TextOnWhitePrimary
                                 )
                                 Text(
                                     text = order.pharmacyAddress,
                                     fontSize = 11.sp,
-                                    color = TextSecondaryMuted
+                                    color = TextOnWhiteSecondary
                                 )
                             }
                             CertifiedBadge(text = "Agréée Santé")
@@ -174,12 +178,12 @@ fun InvoiceDialog(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text("N° COMMANDE", fontSize = 10.sp, color = TextSecondaryMuted, fontWeight = FontWeight.Bold)
-                                Text(order.orderNumber, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
+                                Text("N° COMMANDE", fontSize = 10.sp, color = TextOnWhiteMuted, fontWeight = FontWeight.Bold)
+                                Text(order.orderNumber, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextOnWhitePrimary)
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("DATE DU PAIEMENT", fontSize = 10.sp, color = TextSecondaryMuted, fontWeight = FontWeight.Bold)
-                                Text(dateStr, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextPrimaryDark)
+                                Text("DATE DU PAIEMENT", fontSize = 10.sp, color = TextOnWhiteMuted, fontWeight = FontWeight.Bold)
+                                Text(dateStr, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextOnWhitePrimary)
                             }
                         }
 
@@ -190,21 +194,21 @@ fun InvoiceDialog(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text("PATIENT / CLIENT", fontSize = 10.sp, color = TextSecondaryMuted, fontWeight = FontWeight.Bold)
-                                Text("${order.patientName} (${order.patientPhone})", fontSize = 12.sp, color = TextPrimaryDark)
+                                Text("PATIENT / CLIENT", fontSize = 10.sp, color = TextOnWhiteMuted, fontWeight = FontWeight.Bold)
+                                Text("${order.patientName} (${order.patientPhone})", fontSize = 12.sp, color = TextOnWhitePrimary)
                             }
                         }
 
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("ADRESSE DE LIVRAISON", fontSize = 10.sp, color = TextSecondaryMuted, fontWeight = FontWeight.Bold)
-                        Text(order.deliveryAddress, fontSize = 12.sp, color = TextPrimaryDark)
+                        Text("ADRESSE DE LIVRAISON", fontSize = 10.sp, color = TextOnWhiteMuted, fontWeight = FontWeight.Bold)
+                        Text(order.deliveryAddress, fontSize = 12.sp, color = TextOnWhitePrimary)
 
                         Spacer(modifier = Modifier.height(12.dp))
                         HorizontalDivider(color = Color(0xFFE5ECE9))
                         Spacer(modifier = Modifier.height(12.dp))
 
                         // Items
-                        Text("DÉTAIL DES MÉDICAMENTS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
+                        Text("DÉTAIL DES MÉDICAMENTS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextOnWhiteTeal)
                         Spacer(modifier = Modifier.height(6.dp))
 
                         val itemList = order.itemsSummary.split(" | ")
@@ -218,7 +222,7 @@ fun InvoiceDialog(
                                 Text(
                                     text = "• $itemText",
                                     fontSize = 12.sp,
-                                    color = TextPrimaryDark,
+                                    color = TextOnWhitePrimary,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -233,16 +237,16 @@ fun InvoiceDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Sous-total médicaments:", fontSize = 12.sp, color = TextSecondaryMuted)
-                            Text("${order.subtotalFcfa} FCFA", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                            Text("Sous-total médicaments:", fontSize = 12.sp, color = TextOnWhiteSecondary)
+                            Text("${order.subtotalFcfa} FCFA", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextOnWhitePrimary)
                         }
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Livraison express sécurisée:", fontSize = 12.sp, color = TextSecondaryMuted)
-                            Text("${order.deliveryFeeFcfa} FCFA", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                            Text("Livraison express sécurisée:", fontSize = 12.sp, color = TextOnWhiteSecondary)
+                            Text("${order.deliveryFeeFcfa} FCFA", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextOnWhitePrimary)
                         }
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -252,7 +256,7 @@ fun InvoiceDialog(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("TOTAL PAYÉ EN LIGNE:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
+                            Text("TOTAL PAYÉ EN LIGNE:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextOnWhitePrimary)
                             Text(
                                 "${order.totalFcfa} FCFA",
                                 fontSize = 16.sp,
@@ -271,7 +275,7 @@ fun InvoiceDialog(
                                 .padding(8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Mode de règlement:", fontSize = 11.sp, color = TextSecondaryMuted)
+                            Text("Mode de règlement:", fontSize = 11.sp, color = TextOnWhiteSecondary)
                             Text(order.paymentMethod, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MedicalTealPrimary)
                         }
 
@@ -279,7 +283,7 @@ fun InvoiceDialog(
                         Text(
                             text = "Réf transaction: ${order.paymentTransactionId}",
                             fontSize = 10.sp,
-                            color = TextSecondaryMuted,
+                            color = TextOnWhiteMuted,
                             fontFamily = FontFamily.Monospace
                         )
 
@@ -303,7 +307,7 @@ fun InvoiceDialog(
                                     text = "Traçabilité Pharmaceutique",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimaryDark
+                                    color = TextOnWhitePrimary
                                 )
                                 Text(
                                     text = "Code PIN réception: ${order.deliveryPinCode}",
@@ -314,7 +318,7 @@ fun InvoiceDialog(
                                 Text(
                                     text = "À donner au livreur à l'arrivée",
                                     fontSize = 10.sp,
-                                    color = TextSecondaryMuted
+                                    color = TextOnWhiteMuted
                                 )
                             }
                         }

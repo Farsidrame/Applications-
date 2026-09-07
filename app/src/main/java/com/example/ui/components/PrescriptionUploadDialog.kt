@@ -102,6 +102,7 @@ import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhiteSecondary
 import com.example.ui.theme.VerifiedBadgeGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -666,7 +667,7 @@ fun PrescriptionUploadDialog(
                             Text(
                                 text = "Vérifiera en direct les stocks disponibles avant de valider votre commande.",
                                 fontSize = 10.sp,
-                                color = TextSecondaryMuted
+                                color = TextOnWhiteSecondary
                             )
                         }
                     }

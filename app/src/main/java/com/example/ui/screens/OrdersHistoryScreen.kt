@@ -106,6 +106,8 @@ import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteMuted
 import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.viewmodel.PharmaViewModel
@@ -952,8 +954,8 @@ private fun EnhancedOrderHistoryCard(
                             Icon(Icons.Default.LocalShipping, contentDescription = null, tint = MedicalEmeraldAccent, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Column {
-                                Text("Coursier agréé :", fontSize = 9.sp, color = TextSecondaryMuted)
-                                Text(order.courierName, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
+                                Text("Coursier agréé :", fontSize = 9.sp, color = TextOnWhiteMuted)
+                                Text(order.courierName, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextOnWhitePrimary)
                             }
                         }
 

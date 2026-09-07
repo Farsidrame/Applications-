@@ -111,6 +111,7 @@ import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhiteSecondary
 import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.viewmodel.PharmaViewModel
@@ -616,7 +617,7 @@ fun OrderTrackingScreen(
                                 Text(
                                     text = "À communiquer au coursier lors de la livraison",
                                     fontSize = 11.sp,
-                                    color = TextSecondaryMuted
+                                    color = TextOnWhiteSecondary
                                 )
                             }
 

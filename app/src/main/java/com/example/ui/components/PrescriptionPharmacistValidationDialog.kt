@@ -63,6 +63,10 @@ import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteMuted
+import com.example.ui.theme.TextOnWhiteTeal
 import com.example.ui.theme.VerifiedBadgeGreen
 
 data class AvailableMedItem(
@@ -209,7 +213,7 @@ fun PrescriptionPharmacistValidationDialog(
                                     Text(
                                         text = "Région: ${prescription.pharmacyRegion} • Pharmacie Agréée",
                                         fontSize = 11.sp,
-                                        color = TextSecondaryMuted
+                                        color = TextOnWhiteSecondary
                                     )
                                 }
                             }
@@ -234,7 +238,7 @@ fun PrescriptionPharmacistValidationDialog(
                                 text = "Pharmacien réviseur : ${prescription.pharmacistName}",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimaryDark
+                                color = TextOnWhitePrimary
                             )
                         }
 
@@ -242,7 +246,7 @@ fun PrescriptionPharmacistValidationDialog(
                         Text(
                             text = "Prescription du ${prescription.prescriptionDate} • ${prescription.doctorName}",
                             fontSize = 11.sp,
-                            color = TextSecondaryMuted
+                            color = TextOnWhiteSecondary
                         )
                     }
                 }
@@ -305,7 +309,7 @@ fun PrescriptionPharmacistValidationDialog(
                                             text = item.name,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 13.sp,
-                                            color = TextPrimaryDark,
+                                            color = TextOnWhitePrimary,
                                             modifier = Modifier.weight(1f)
                                         )
                                         Text(
@@ -336,7 +340,7 @@ fun PrescriptionPharmacistValidationDialog(
                                         Text(
                                             text = item.dosage,
                                             fontSize = 11.sp,
-                                            color = TextSecondaryMuted
+                                            color = TextOnWhiteSecondary
                                         )
                                     }
 
@@ -345,7 +349,7 @@ fun PrescriptionPharmacistValidationDialog(
                                     Text(
                                         text = "Conseil prise : ${item.posologyAdvice}",
                                         fontSize = 10.sp,
-                                        color = TextSecondaryMuted,
+                                        color = TextOnWhiteMuted,
                                         lineHeight = 14.sp
                                     )
                                 }
@@ -398,13 +402,13 @@ fun PrescriptionPharmacistValidationDialog(
                         Text(
                             text = "$selectedCount médicament(s) sélectionné(s)",
                             fontSize = 11.sp,
-                            color = TextSecondaryMuted
+                            color = TextOnWhiteMuted
                         )
                         Text(
                             text = "Total Médicaments Disponibles",
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
-                            color = TextPrimaryDark
+                            color = TextOnWhitePrimary
                         )
                     }
                     Text(

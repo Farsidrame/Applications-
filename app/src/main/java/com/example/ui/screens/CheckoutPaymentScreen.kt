@@ -116,6 +116,9 @@ import com.example.ui.theme.OrangeMoneyColor
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteMuted
 import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.theme.VisaBlueColor
 import com.example.ui.theme.WaveBlueColor
@@ -546,7 +549,7 @@ fun CheckoutPaymentScreen(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Créneaux disponibles :", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
+                        Text("Créneaux disponibles :", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextOnWhitePrimary)
                         Spacer(modifier = Modifier.height(6.dp))
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             val slots = listOf(
@@ -635,7 +638,7 @@ fun CheckoutPaymentScreen(
                                             text = selectedAddressEntity?.title ?: "Domicile",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 13.sp,
-                                            color = TextPrimaryDark
+                                            color = TextOnWhitePrimary
                                         )
                                         if (selectedAddressEntity?.isDefault == true) {
                                             Spacer(modifier = Modifier.width(6.dp))
@@ -671,19 +674,19 @@ fun CheckoutPaymentScreen(
                                     text = currentDeliveryAddressString,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = TextPrimaryDark,
+                                    color = TextOnWhitePrimary,
                                     lineHeight = 16.sp
                                 )
 
                                 Spacer(modifier = Modifier.height(4.dp))
 
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Person, contentDescription = null, tint = TextSecondaryMuted, modifier = Modifier.size(13.dp))
+                                    Icon(Icons.Default.Person, contentDescription = null, tint = TextOnWhiteSecondary, modifier = Modifier.size(13.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = "$currentRecipientName • $currentRecipientPhone",
                                         fontSize = 11.sp,
-                                        color = TextSecondaryMuted
+                                        color = TextOnWhiteSecondary
                                     )
                                 }
 
@@ -731,7 +734,7 @@ fun CheckoutPaymentScreen(
                                             Icon(
                                                 imageVector = if (isCurrent) Icons.Default.CheckCircle else Icons.Default.Home,
                                                 contentDescription = null,
-                                                tint = if (isCurrent) MedicalTealPrimary else TextSecondaryMuted,
+                                                tint = if (isCurrent) MedicalTealPrimary else TextOnWhiteMuted,
                                                 modifier = Modifier.size(14.dp)
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
@@ -739,7 +742,7 @@ fun CheckoutPaymentScreen(
                                                 text = "${addr.title} • ${addr.neighborhood}",
                                                 fontSize = 11.sp,
                                                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isCurrent) MedicalTealDark else TextPrimaryDark
+                                                color = if (isCurrent) MedicalTealDark else TextOnWhitePrimary
                                             )
                                         }
                                     }

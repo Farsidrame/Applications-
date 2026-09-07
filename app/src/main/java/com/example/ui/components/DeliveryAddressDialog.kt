@@ -81,6 +81,7 @@ import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
 import com.example.ui.theme.VerifiedBadgeGreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -373,7 +374,7 @@ fun DeliveryAddressDialog(
                                 Text(
                                     text = q,
                                     fontSize = 10.sp,
-                                    color = if (neighborhood == q) Color.White else TextPrimaryDark,
+                                    color = if (neighborhood == q) Color.White else TextOnWhitePrimary,
                                     fontWeight = FontWeight.Medium,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                                 )

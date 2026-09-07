@@ -84,6 +84,8 @@ import com.example.ui.theme.SafeBlueLight
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteMuted
 import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.viewmodel.PharmaViewModel
 
@@ -357,14 +359,14 @@ private fun PharmacistChatView(
                             Text(
                                 text = msg.text,
                                 fontSize = 13.sp,
-                                color = if (isUser) Color.White else TextPrimaryDark,
+                                color = if (isUser) Color.White else TextOnWhitePrimary,
                                 lineHeight = 17.sp
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = msg.timestamp,
                                 fontSize = 10.sp,
-                                color = if (isUser) Color.White.copy(alpha = 0.7f) else TextSecondaryMuted,
+                                color = if (isUser) Color.White.copy(alpha = 0.7f) else TextOnWhiteMuted,
                                 modifier = Modifier.align(Alignment.End)
                             )
                         }
@@ -669,7 +671,7 @@ private fun InteractionCheckerView() {
                             Text(
                                 text = "L'association de deux anti-inflammatoires (AINS : Ibuprofène + Aspirine) majore fortement le risque d'ulcère gastrique et de saignements. Préférez le paracétamol.",
                                 fontSize = 11.sp,
-                                color = TextPrimaryDark,
+                                color = TextOnWhitePrimary,
                                 lineHeight = 15.sp
                             )
                         }

@@ -72,6 +72,7 @@ import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhiteSecondary
 import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.viewmodel.PharmaViewModel
@@ -444,7 +445,7 @@ private fun PrescriptionCard(
                     Text(
                         text = "Pharmacien responsable : ${prescription.pharmacistName}",
                         fontSize = 11.5.sp,
-                        color = TextSecondaryMuted
+                        color = TextOnWhiteSecondary
                     )
                 }
             }

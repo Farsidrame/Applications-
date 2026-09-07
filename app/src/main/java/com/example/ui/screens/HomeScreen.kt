@@ -89,6 +89,11 @@ import com.example.ui.theme.SafeBlueLight
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteTeal
+import com.example.ui.theme.TextOnWhiteOrange
+import com.example.ui.theme.TextOnWhiteBlue
 import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.viewmodel.PharmaViewModel
@@ -442,7 +447,7 @@ fun HomeScreen(
                             Text(
                                 text = "Validation pharmacien",
                                 fontSize = 12.sp,
-                                color = TextSecondaryMuted,
+                                color = TextOnWhiteBlue,
                                 fontWeight = FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -496,7 +501,7 @@ fun HomeScreen(
                             Text(
                                 text = "Ouvertes 24h/24",
                                 fontSize = 12.sp,
-                                color = TextSecondaryMuted,
+                                color = TextOnWhiteOrange,
                                 fontWeight = FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -553,7 +558,7 @@ fun HomeScreen(
                             Text(
                                 text = "Tous les médicaments",
                                 fontSize = 12.sp,
-                                color = TextSecondaryMuted,
+                                color = TextOnWhiteTeal,
                                 fontWeight = FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -604,7 +609,7 @@ fun HomeScreen(
                             Text(
                                 text = "Reçus & liens paiement",
                                 fontSize = 12.sp,
-                                color = TextSecondaryMuted,
+                                color = TextOnWhiteSecondary,
                                 fontWeight = FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -674,7 +679,7 @@ fun HomeScreen(
                             Text(
                                 text = "Comment commander, ordonnances et bon usage des médicaments",
                                 fontSize = 12.5.sp,
-                                color = TextSecondaryMuted,
+                                color = TextOnWhiteSecondary,
                                 lineHeight = 17.sp
                             )
                         }
@@ -881,7 +886,7 @@ fun HomeScreen(
                                "• Respect de la chaîne du froid et emballage scellé inviolable.\n" +
                                "• Paiement en ligne sécurisé et traçabilité complète de votre commande.",
                         fontSize = 12.sp,
-                        color = TextSecondaryMuted,
+                        color = TextOnWhiteSecondary,
                         lineHeight = 18.sp
                     )
 
