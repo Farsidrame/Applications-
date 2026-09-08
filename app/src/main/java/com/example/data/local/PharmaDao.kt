@@ -87,6 +87,9 @@ interface PharmaDao {
     @Update
     suspend fun updateUserProfile(profile: UserProfileEntity)
 
+    @Query("DELETE FROM user_profile")
+    suspend fun deleteUserProfile()
+
     // --- Delivery Addresses ---
     @Query("SELECT * FROM delivery_addresses ORDER BY isDefault DESC, createdAt DESC")
     fun getAllAddresses(): Flow<List<DeliveryAddressEntity>>
@@ -105,6 +108,9 @@ interface PharmaDao {
 
     @Query("DELETE FROM delivery_addresses WHERE id = :id")
     suspend fun deleteAddressById(id: String)
+
+    @Query("DELETE FROM delivery_addresses")
+    suspend fun clearAllDeliveryAddresses()
 
     @Query("UPDATE delivery_addresses SET isDefault = 0")
     suspend fun clearDefaultAddresses()

@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,10 +48,12 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.ReceiptLong
@@ -62,6 +65,7 @@ import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.VpnKey
 import com.example.auth.AuthUser
+import com.example.ui.components.DeleteAccountDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -267,6 +271,9 @@ fun ProfileScreen(
     // Invoice View Dialog
     var selectedOrderForInvoice by remember { mutableStateOf<OrderEntity?>(null) }
 
+    // Account Deletion Dialog State
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = modifier
             .fillMaxSize()
@@ -336,6 +343,9 @@ fun ProfileScreen(
                                     snackbarHostState.showSnackbar("Déconnexion effectuée avec succès.")
                                 }
                             }
+                        },
+                        onDeleteAccount = {
+                            showDeleteAccountDialog = true
                         }
                     )
 
@@ -469,6 +479,67 @@ fun ProfileScreen(
                                 }
                             }
                         }
+
+                        // Suppression Définitive du Compte & Identifiant Card
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("btn_menu_delete_account")
+                                .clickable { showDeleteAccountDialog = true },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1212)),
+                            border = BorderStroke(1.dp, Color(0xFF7F1D1D).copy(alpha = 0.5f)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF3F1515)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PersonRemove,
+                                        contentDescription = "Supprimer mon compte",
+                                        tint = Color(0xFFEF4444),
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(14.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Supprimer mon Compte & Identifiant",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFFCA5A5)
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = "Effacement irréversible du compte, identifiant, ordonnances et données de santé",
+                                        fontSize = 11.5.sp,
+                                        color = Color.White.copy(alpha = 0.8f),
+                                        lineHeight = 15.sp
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                    contentDescription = "Ouvrir",
+                                    tint = Color(0xFFEF4444).copy(alpha = 0.7f),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
                     }
                 }
             } else {
@@ -519,6 +590,9 @@ fun ProfileScreen(
                             },
                             onResetPassword = { email, onSuccess, onError ->
                                 viewModel.sendPasswordReset(email, onSuccess, onError)
+                            },
+                            onDeleteAccount = {
+                                showDeleteAccountDialog = true
                             },
                             onSaveContact = { fullName, email, phone, secPhone, emerName, emerPhone, blood, allergies, paymentMethod, medNotes, role ->
                                 viewModel.updateContactDetails(
@@ -649,6 +723,9 @@ fun ProfileScreen(
                             biometricAuthManager = viewModel.biometricAuthManager,
                             onLockSession = {
                                 viewModel.lockSession()
+                            },
+                            onDeleteAccount = {
+                                showDeleteAccountDialog = true
                             },
                             onShowMessage = { msg ->
                                 coroutineScope.launch {
@@ -810,6 +887,33 @@ fun ProfileScreen(
             }
         )
     }
+
+    // Modal Dialog: Suppression Définitive du Compte & Identifiant
+    if (showDeleteAccountDialog) {
+        val isDeletingAccount by viewModel.authLoading.collectAsStateWithLifecycle()
+        DeleteAccountDialog(
+            profile = userProfile,
+            currentUser = currentUser,
+            isLoading = isDeletingAccount,
+            onDismiss = { showDeleteAccountDialog = false },
+            onConfirmDelete = { clearAllAddresses ->
+                viewModel.deleteUserAccount(
+                    clearAllLocalData = clearAllAddresses,
+                    onSuccess = { msg ->
+                        showDeleteAccountDialog = false
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(msg)
+                        }
+                    },
+                    onError = { err ->
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("Erreur: $err")
+                        }
+                    }
+                )
+            }
+        )
+    }
 }
 
 @Composable
@@ -822,7 +926,8 @@ private fun ProfileHeroCard(
     pharmacistsCount: Int,
     couriersCount: Int,
     onOpenAuth: () -> Unit,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit = {}
 ) {
     val isAuthenticated = currentUser != null || (profile != null && profile.firebaseUid.isNotBlank())
     val name = when {
@@ -975,28 +1080,52 @@ private fun ProfileHeroCard(
             } else {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
                         onClick = onOpenAuth,
-                        modifier = Modifier.height(34.dp).testTag("btn_switch_auth"),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(34.dp)
+                            .testTag("btn_switch_auth"),
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Changer de compte", fontSize = 11.sp)
+                        Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(13.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text("Changer", fontSize = 10.5.sp)
                     }
 
-                    TextButton(
+                    OutlinedButton(
                         onClick = onSignOut,
-                        modifier = Modifier.height(34.dp).testTag("btn_hero_signout"),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(34.dp)
+                            .testTag("btn_hero_signout"),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Déconnexion", fontSize = 11.sp, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(13.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text("Quitter", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = onDeleteAccount,
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .height(34.dp)
+                            .testTag("btn_hero_delete_account"),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.PersonRemove, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text("Supprimer", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
@@ -1033,6 +1162,7 @@ private fun ContactInformationTab(
     currentUser: AuthUser?,
     onOpenAuth: () -> Unit,
     onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit = {},
     onResetPassword: (email: String, onSuccess: (String) -> Unit, onError: (String) -> Unit) -> Unit,
     onSaveContact: (
         fullName: String,
@@ -1177,6 +1307,28 @@ private fun ContactInformationTab(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Déconnexion", fontSize = 11.sp, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    TextButton(
+                        onClick = onDeleteAccount,
+                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.testTag("btn_delete_account_link_contact")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonRemove,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp),
+                            tint = Color(0xFFEF4444)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Supprimer mon compte & identifiant",
+                            fontSize = 11.sp,
+                            color = Color(0xFFEF4444),
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
 
                     passwordResetStatus?.let {
@@ -1404,6 +1556,87 @@ private fun ContactInformationTab(
             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text("Enregistrer mes informations", fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Privacy & Account Deletion Card (Google Play compliance)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("card_delete_account_zone"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1B1111)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF7F1D1D).copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF3F1515)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonRemove,
+                            contentDescription = null,
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Suppression du Compte & Identifiant",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFCA5A5)
+                        )
+                        Text(
+                            text = "Conformité RGPD et Google Play",
+                            fontSize = 10.5.sp,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Vous pouvez à tout moment supprimer définitivement votre compte, votre identifiant, vos ordonnances téléversées et l'ensemble de vos données de santé.",
+                    fontSize = 11.5.sp,
+                    color = Color.White.copy(alpha = 0.85f),
+                    lineHeight = 16.sp
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedButton(
+                    onClick = onDeleteAccount,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDC2626)),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFF87171)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(38.dp)
+                        .testTag("btn_delete_account_contact_tab")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteForever,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = Color(0xFFEF4444)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Supprimer mon compte et identifiant",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF87171)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(30.dp))

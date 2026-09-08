@@ -248,10 +248,18 @@ class PharmaRepository(private val dao: PharmaDao) {
         dao.insertUserProfile(profile)
     }
 
+    suspend fun deleteUserProfile() {
+        dao.deleteUserProfile()
+    }
+
     // --- Delivery Addresses Management ---
     val deliveryAddresses: Flow<List<DeliveryAddressEntity>> = dao.getAllAddresses()
 
     fun getDefaultAddress(): Flow<DeliveryAddressEntity?> = dao.getDefaultAddress()
+
+    suspend fun clearAllDeliveryAddresses() {
+        dao.clearAllDeliveryAddresses()
+    }
 
     suspend fun addDeliveryAddress(
         title: String,

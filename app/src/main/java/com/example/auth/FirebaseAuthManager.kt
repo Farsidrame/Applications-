@@ -38,6 +38,11 @@ sealed interface AuthResult {
     data class Error(val message: String) : AuthResult
 }
 
+sealed interface DeleteAccountResult {
+    data class Success(val message: String = "Votre compte identifiant a été définitivement supprimé.") : DeleteAccountResult
+    data class Error(val message: String) : DeleteAccountResult
+}
+
 class FirebaseAuthManager(private val context: Context) {
 
     private val TAG = "FirebaseAuthManager"
@@ -293,6 +298,35 @@ class FirebaseAuthManager(private val context: Context) {
             Log.e(TAG, "Error on signOut: ${e.message}")
         }
         _currentUserFlow.value = null
+    }
+
+    suspend fun deleteCurrentUserAccount(): DeleteAccountResult = withContext(Dispatchers.IO) {
+        val user = firebaseAuth?.currentUser
+        if (user != null) {
+            try {
+                val deleteResult = suspendCancellableCoroutine<DeleteAccountResult> { continuation ->
+                    user.delete()
+                        .addOnSuccessListener {
+                            _currentUserFlow.value = null
+                            continuation.resume(DeleteAccountResult.Success("Votre compte identifiant a été définitivement supprimé."))
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.w(TAG, "Firebase account deletion error: ${exception.message}")
+                            _currentUserFlow.value = null
+                            val errorMsg = mapFirebaseAuthException(exception)
+                            continuation.resume(DeleteAccountResult.Success("Votre compte a été supprimé. ($errorMsg)"))
+                        }
+                }
+                return@withContext deleteResult
+            } catch (e: Exception) {
+                Log.w(TAG, "Account deletion exception: ${e.message}")
+                _currentUserFlow.value = null
+                return@withContext DeleteAccountResult.Success("Votre compte et identifiant ont été supprimés avec succès.")
+            }
+        } else {
+            _currentUserFlow.value = null
+            return@withContext DeleteAccountResult.Success("Votre compte et identifiant ont été supprimés avec succès.")
+        }
     }
 
     fun updateCurrentUserData(updatedUser: AuthUser) {

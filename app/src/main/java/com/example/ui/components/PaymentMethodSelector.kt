@@ -48,6 +48,9 @@ import com.example.ui.theme.OrangeMoneyColor
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.VisaBlueColor
 import com.example.ui.theme.WaveBlueColor
 
@@ -179,13 +182,13 @@ private fun PaymentMethodOption(
                         text = title,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimaryDark
+                        color = if (isSelected) MedicalTealDark else TextPrimaryDark
                     )
 
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(badgeColor.copy(alpha = 0.12f))
+                            .background(badgeColor.copy(alpha = if (isSelected) 0.2f else 0.12f))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
@@ -200,7 +203,7 @@ private fun PaymentMethodOption(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondaryMuted,
+                    color = if (isSelected) TextOnWhiteSecondary else TextSecondaryMuted,
                     fontSize = 11.sp,
                     lineHeight = 14.sp
                 )

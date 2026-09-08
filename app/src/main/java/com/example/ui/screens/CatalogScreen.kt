@@ -103,6 +103,10 @@ import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
+import com.example.ui.theme.TextOnWhiteMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteTeal
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
 import com.example.ui.theme.VerifiedBadgeGreen
@@ -348,13 +352,13 @@ fun CatalogScreen(
                                         Text(
                                             text = "Position GPS de recherche",
                                             fontSize = 10.sp,
-                                            color = MedicalTealDark,
+                                            color = TextOnWhiteTeal,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Icon(
                                             Icons.Default.ExpandMore,
                                             contentDescription = null,
-                                            tint = MedicalTealDark,
+                                            tint = TextOnWhiteTeal,
                                             modifier = Modifier.size(14.dp)
                                         )
                                     }
@@ -362,7 +366,7 @@ fun CatalogScreen(
                                         text = userLocation.addressName,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = TextPrimaryDark,
+                                        color = TextOnWhitePrimary,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -388,7 +392,7 @@ fun CatalogScreen(
                                     Icon(
                                         imageVector = Icons.Default.List,
                                         contentDescription = "Vue Liste",
-                                        tint = if (pharmacyViewMode == "LIST") Color.White else TextSecondaryMuted,
+                                        tint = if (pharmacyViewMode == "LIST") Color.White else TextOnWhiteMuted,
                                         modifier = Modifier
                                             .padding(6.dp)
                                             .size(18.dp)
@@ -404,7 +408,7 @@ fun CatalogScreen(
                                     Icon(
                                         imageVector = Icons.Default.Radar,
                                         contentDescription = "Vue Radar Proximité",
-                                        tint = if (pharmacyViewMode == "RADAR") Color.White else TextSecondaryMuted,
+                                        tint = if (pharmacyViewMode == "RADAR") Color.White else TextOnWhiteMuted,
                                         modifier = Modifier
                                             .padding(6.dp)
                                             .size(18.dp)
@@ -886,7 +890,7 @@ fun CatalogScreen(
                     Text(
                         text = "Sélectionnez votre quartier ou ville pour recalculer en temps réel la distance de toutes les pharmacies certifiées :",
                         fontSize = 12.sp,
-                        color = TextSecondaryMuted
+                        color = TextOnWhiteMuted
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -945,7 +949,7 @@ fun CatalogScreen(
                                                 text = preset.name,
                                                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
                                                 fontSize = 12.sp,
-                                                color = TextPrimaryDark,
+                                                color = TextOnWhitePrimary,
                                                 modifier = Modifier.weight(1f, fill = false)
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
@@ -966,7 +970,7 @@ fun CatalogScreen(
                                         Text(
                                             text = "${preset.district} • ${preset.city} (${preset.latitude}, ${preset.longitude})",
                                             fontSize = 10.sp,
-                                            color = TextSecondaryMuted
+                                            color = TextOnWhiteSecondary
                                         )
                                     }
                                     if (isCurrent) {

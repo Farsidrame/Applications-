@@ -173,11 +173,11 @@ fun CheckoutPaymentScreen(
     var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.WAVE) }
     var mobileOrCardNumber by remember(userPhone) { mutableStateOf(userPhone) }
     
-    // Credit Card Form Specifics
-    var cardHolderName by remember(userName) { mutableStateOf(if (userName.isNotBlank()) userName else "TITULAIRE COMPTE") }
-    var cardNumberFormatted by remember { mutableStateOf("4532 8912 3456 7890") }
-    var cardExpiry by remember { mutableStateOf("12/28") }
-    var cardCvv by remember { mutableStateOf("382") }
+    // Credit Card Form Specifics (Empty fields for user manual input)
+    var cardHolderName by remember { mutableStateOf("") }
+    var cardNumberFormatted by remember { mutableStateOf("") }
+    var cardExpiry by remember { mutableStateOf("") }
+    var cardCvv by remember { mutableStateOf("") }
     var isCvvVisible by remember { mutableStateOf(false) }
 
     // Promo Code State
@@ -512,7 +512,7 @@ fun CheckoutPaymentScreen(
                                         text = option.title,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = TextPrimaryDark
+                                        color = if (isSelected) MedicalTealDark else TextPrimaryDark
                                     )
                                     Text(
                                         text = if (option.feeFcfa == 0) "GRATUIT" else "${option.feeFcfa} FCFA",
@@ -524,7 +524,7 @@ fun CheckoutPaymentScreen(
                                 Text(
                                     text = option.subtitle,
                                     fontSize = 11.sp,
-                                    color = TextSecondaryMuted
+                                    color = if (isSelected) TextOnWhiteSecondary else TextSecondaryMuted
                                 )
                             }
 
@@ -962,6 +962,7 @@ fun CheckoutPaymentScreen(
                                 value = cardHolderName,
                                 onValueChange = { cardHolderName = it },
                                 label = { Text("Nom sur la carte") },
+                                placeholder = { Text("ex: Mamadou Diop", fontSize = 12.sp, color = TextOnWhiteMuted) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(10.dp),
                                 singleLine = true,
@@ -974,6 +975,7 @@ fun CheckoutPaymentScreen(
                                 value = cardNumberFormatted,
                                 onValueChange = { cardNumberFormatted = it },
                                 label = { Text("Numéro de carte (16 chiffres)") },
+                                placeholder = { Text("4532 0000 0000 0000", fontSize = 12.sp, color = TextOnWhiteMuted) },
                                 modifier = Modifier.fillMaxWidth().testTag("payment_account_input"),
                                 shape = RoundedCornerShape(10.dp),
                                 singleLine = true,
@@ -994,6 +996,7 @@ fun CheckoutPaymentScreen(
                                     value = cardExpiry,
                                     onValueChange = { cardExpiry = it },
                                     label = { Text("Expiration (MM/AA)") },
+                                    placeholder = { Text("MM/AA", fontSize = 12.sp, color = TextOnWhiteMuted) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(10.dp),
                                     singleLine = true,
@@ -1005,6 +1008,7 @@ fun CheckoutPaymentScreen(
                                     value = cardCvv,
                                     onValueChange = { cardCvv = it },
                                     label = { Text("CVV (3 chiffres)") },
+                                    placeholder = { Text("123", fontSize = 12.sp, color = TextOnWhiteMuted) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(10.dp),
                                     singleLine = true,
@@ -1016,11 +1020,31 @@ fun CheckoutPaymentScreen(
                                             Icon(
                                                 imageVector = if (isCvvVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                                 contentDescription = null,
-                                                tint = TextSecondaryMuted,
+                                                tint = if (isCvvVisible) VisaBlueColor else TextOnWhiteMuted,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
                                     }
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(VisaBlueColor.copy(alpha = 0.08f))
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Security, contentDescription = null, tint = VisaBlueColor, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Champs vierges pour votre sécurité bancaire • Aucune donnée de carte n'est pré-enregistrée",
+                                    fontSize = 10.5.sp,
+                                    color = VisaBlueColor,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -1276,28 +1300,81 @@ fun CheckoutPaymentScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Trust & Medical Certification Badges
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFF1F5F9))
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFFF8FAFC),
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    Icon(Icons.Default.HealthAndSafety, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text("Garantie Qualité & Chaîne du Froid", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
-                        Text("Préparation vérifiée par Docteur en Pharmacie • Sac 2-8°C", fontSize = 9.5.sp, color = TextSecondaryMuted)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFE6F7F0)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.HealthAndSafety,
+                                contentDescription = null,
+                                tint = MedicalTealPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Garantie Qualité & Chaîne du Froid",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextOnWhitePrimary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Préparation certifiée officinale • Sac isotherme 2-8°C",
+                                fontSize = 10.sp,
+                                color = TextOnWhiteSecondary
+                            )
+                        }
                     }
-                }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = VerifiedBadgeGreen, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("100% Authentique", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = VerifiedBadgeGreen)
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Badge « 100% Authentique » with high-contrast adapted font color
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color(0xFFDCFCE7),
+                        border = BorderStroke(1.dp, Color(0xFF86EFAC))
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.VerifiedUser,
+                                contentDescription = null,
+                                tint = Color(0xFF0F5132),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "100% Authentique",
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFF0F5132)
+                            )
+                        }
+                    }
                 }
             }
 

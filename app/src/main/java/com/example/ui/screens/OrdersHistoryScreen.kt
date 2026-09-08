@@ -354,12 +354,12 @@ fun OrdersHistoryScreen(
                                 text = "Historique des Commandes",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = TextPrimaryDark
+                                color = TextOnWhitePrimary
                             )
                             Text(
                                 text = "Détails complets, factures certifiées & rachat express",
                                 fontSize = 12.sp,
-                                color = TextSecondaryMuted
+                                color = TextOnWhiteMuted
                             )
                         }
 
@@ -416,16 +416,22 @@ fun OrdersHistoryScreen(
                         Card(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4))
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBBF7D0))
                         ) {
                             Column(modifier = Modifier.padding(10.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.ShoppingBag, contentDescription = null, tint = MedicalEmeraldAccent, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.ShoppingBag, contentDescription = null, tint = Color(0xFF15803D), modifier = Modifier.size(14.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Commandes", fontSize = 10.sp, color = TextSecondaryMuted, fontWeight = FontWeight.Medium)
+                                    Text("Commandes", fontSize = 11.sp, color = Color(0xFF166534), fontWeight = FontWeight.Bold)
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("$totalOrdersCount passée${if (totalOrdersCount > 1) "s" else ""}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimaryDark)
+                                Text(
+                                    text = "$totalOrdersCount passée${if (totalOrdersCount > 1) "s" else ""}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF0F5132)
+                                )
                             }
                         }
 
@@ -433,16 +439,22 @@ fun OrdersHistoryScreen(
                         Card(
                             modifier = Modifier.weight(1.3f),
                             shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = MedicalTealLight)
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFE6F7F0)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF99F6E4))
                         ) {
                             Column(modifier = Modifier.padding(10.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Payment, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.Payment, contentDescription = null, tint = Color(0xFF004D34), modifier = Modifier.size(14.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Total Dépensé", fontSize = 10.sp, color = TextSecondaryMuted, fontWeight = FontWeight.Medium)
+                                    Text("Total Dépensé", fontSize = 11.sp, color = Color(0xFF004D34), fontWeight = FontWeight.Bold)
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("$totalSpentFcfa FCFA", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MedicalTealPrimary)
+                                Text(
+                                    text = "$totalSpentFcfa FCFA",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF00382B)
+                                )
                             }
                         }
 
@@ -451,21 +463,32 @@ fun OrdersHistoryScreen(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (activeOrdersCount > 0) Color(0xFFE0F7FA) else Color(0xFFF5F5F5)
-                            )
+                                containerColor = if (activeOrdersCount > 0) Color(0xFFE0F2FE) else Color(0xFFF1F5F9)
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (activeOrdersCount > 0) Color(0xFFBAE6FD) else Color(0xFFCBD5E1))
                         ) {
                             Column(modifier = Modifier.padding(10.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.LocalShipping, contentDescription = null, tint = if (activeOrdersCount > 0) SafeBlueSecondary else TextSecondaryMuted, modifier = Modifier.size(14.dp))
+                                    Icon(
+                                        Icons.Default.LocalShipping,
+                                        contentDescription = null,
+                                        tint = if (activeOrdersCount > 0) Color(0xFF0284C7) else Color(0xFF475569),
+                                        modifier = Modifier.size(14.dp)
+                                    )
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("En cours", fontSize = 10.sp, color = TextSecondaryMuted, fontWeight = FontWeight.Medium)
+                                    Text(
+                                        text = "En cours",
+                                        fontSize = 11.sp,
+                                        color = if (activeOrdersCount > 0) Color(0xFF0369A1) else Color(0xFF334155),
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = if (activeOrdersCount > 0) "$activeOrdersCount active${if (activeOrdersCount > 1) "s" else ""}" else "0 active",
                                     fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (activeOrdersCount > 0) SafeBlueSecondary else TextSecondaryMuted
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = if (activeOrdersCount > 0) Color(0xFF075985) else Color(0xFF1E293B)
                                 )
                             }
                         }
@@ -480,14 +503,14 @@ fun OrdersHistoryScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("orders_search_input"),
-                        placeholder = { Text("Rechercher par N° (#PH-...), médicament, pharmacie...", fontSize = 12.sp) },
+                        placeholder = { Text("Rechercher par N° (#PH-...), médicament, pharmacie...", fontSize = 12.sp, color = TextOnWhiteMuted) },
                         leadingIcon = {
-                            Icon(Icons.Default.Search, contentDescription = "Rechercher", tint = TextSecondaryMuted, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Search, contentDescription = "Rechercher", tint = TextOnWhiteMuted, modifier = Modifier.size(18.dp))
                         },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Effacer", tint = TextSecondaryMuted, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Clear, contentDescription = "Effacer", tint = TextOnWhiteMuted, modifier = Modifier.size(18.dp))
                                 }
                             }
                         },
@@ -530,7 +553,7 @@ fun OrdersHistoryScreen(
                                     selectedContainerColor = MedicalTealPrimary,
                                     selectedLabelColor = Color.White,
                                     containerColor = MaterialTheme.colorScheme.surface,
-                                    labelColor = TextPrimaryDark
+                                    labelColor = TextOnWhitePrimary
                                 ),
                                 shape = RoundedCornerShape(20.dp),
                                 modifier = Modifier.testTag("order_filter_tab_$index")
