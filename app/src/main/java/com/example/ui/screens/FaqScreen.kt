@@ -115,6 +115,8 @@ import com.example.ui.theme.PrescriptionAlertBg
 import com.example.ui.theme.PrescriptionAlertRed
 import com.example.ui.theme.SafeBlueLight
 import com.example.ui.theme.SafeBlueSecondary
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
 import com.example.ui.theme.VerifiedBadgeBg
@@ -610,24 +612,25 @@ fun BeginnerGuideSection(
                     Text(
                         text = "Guide Débutant : Commander en 4 Étapes",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = TextPrimaryDark
+                        fontSize = 15.sp,
+                        color = TextOnWhitePrimary
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "Procédure officielle simplifiée pour votre première commande",
-                        fontSize = 11.sp,
-                        color = TextSecondaryMuted
+                        fontSize = 11.5.sp,
+                        color = TextOnWhiteSecondary
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Les 4 étapes illustrées
+            // Les 4 étapes illustrées bien rangées et lisibles
             StepGuideItem(
                 stepNumber = "1",
                 title = "Sélectionnez vos médicaments ou scannez l'ordonnance",
-                desc = "Recherchez par nom ou symptôme, ou envoyez une photo de votre ordonnance médicale.",
+                desc = "Recherchez par nom ou symptôme dans notre catalogue agréé, ou prenez une photo claire de votre ordonnance médicale.",
                 badge = "Catalogue ou Scan",
                 icon = Icons.Default.Search,
                 accentColor = MedicalTealPrimary
@@ -638,7 +641,7 @@ fun BeginnerGuideSection(
             StepGuideItem(
                 stepNumber = "2",
                 title = "Choisissez votre pharmacie partenaire & de garde",
-                desc = "Officines agréées au Sénégal avec contrôle thermique et disponibilité certifiée en stock.",
+                desc = "Sélectionnez parmi les officines agréées au Sénégal avec contrôle thermique garanti et disponibilité certifiée en stock.",
                 badge = "Officines Agréées",
                 icon = Icons.Default.LocalPharmacy,
                 accentColor = SafeBlueSecondary
@@ -649,7 +652,7 @@ fun BeginnerGuideSection(
             StepGuideItem(
                 stepNumber = "3",
                 title = "Paiement numérique 100% sécurisé",
-                desc = "Réglez sans contact via Wave, Orange Money, Free Money ou carte bancaire.",
+                desc = "Réglez vos achats sans contact via Wave, Orange Money, Free Money ou carte bancaire avec reçu immédiat.",
                 badge = "Wave / Orange Money",
                 icon = Icons.Default.Payment,
                 accentColor = OrangeMoneyColor
@@ -660,11 +663,67 @@ fun BeginnerGuideSection(
             StepGuideItem(
                 stepNumber = "4",
                 title = "Livraison express scellée & SMS de conformité",
-                desc = "Suivi GPS en direct du coursier. Remise sécurisée avec code PIN et notification SMS officielle.",
+                desc = "Suivez le coursier en temps réel par GPS. Remise sécurisée avec code PIN et notification SMS officielle.",
                 badge = "20-35 min • SMS",
                 icon = Icons.Default.LocalShipping,
                 accentColor = VerifiedBadgeGreen
             )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Raccourcis d'actions rapides sous les 4 étapes
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onNavigateToCatalog,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(38.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, MedicalTealPrimary),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MedicalTealPrimary,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Catalogue",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MedicalTealPrimary
+                    )
+                }
+
+                Button(
+                    onClick = onNavigateToPrescriptions,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(38.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.UploadFile,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Scanner Ordonnance",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
         }
     }
 }
@@ -678,66 +737,107 @@ fun StepGuideItem(
     icon: ImageVector,
     accentColor: Color
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFF9FBFB))
-            .padding(10.dp),
-        verticalAlignment = Alignment.Top
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .size(28.dp)
-                .clip(CircleShape)
-                .background(accentColor),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(14.dp)
         ) {
-            Text(
-                text = stepNumber,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
+            // Ligne 1 : En-tête bien aligné avec pastille d'étape et badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = TextPrimaryDark,
-                    modifier = Modifier.weight(1f)
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(accentColor.copy(alpha = 0.12f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Pastille numéro d'étape
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(accentColor),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stepNumber,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    // Étiquette avec icône
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = accentColor.copy(alpha = 0.12f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = accentColor,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = "Étape $stepNumber",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = accentColor
+                            )
+                        }
+                    }
+                }
+
+                // Badge descriptif aligné à droite
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFF8FAFC),
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                 ) {
                     Text(
                         text = badge,
-                        fontSize = 9.sp,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
                         color = accentColor,
-                        fontWeight = FontWeight.Bold
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
+            // Ligne 2 : Titre complet, visible et non compressé
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.5.sp,
+                color = TextOnWhitePrimary,
+                lineHeight = 19.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(5.dp))
+
+            // Ligne 3 : Description aérée avec couleur sombre lisible
             Text(
                 text = desc,
-                fontSize = 11.sp,
-                color = TextSecondaryMuted,
-                lineHeight = 15.sp
+                fontSize = 12.sp,
+                color = TextOnWhiteSecondary,
+                lineHeight = 17.5.sp,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -849,8 +949,8 @@ fun FaqExpandableCard(
                 Text(
                     text = faq.summary,
                     fontSize = 12.sp,
-                    color = TextSecondaryMuted,
-                    lineHeight = 16.sp,
+                    color = TextOnWhiteSecondary,
+                    lineHeight = 16.5.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )

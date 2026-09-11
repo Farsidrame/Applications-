@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Medication
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.UploadFile
@@ -80,6 +81,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.InitialData
 import com.example.data.model.CartItemEntity
+import com.example.ui.components.PrescriptionQrScannerDialog
 import com.example.ui.components.PrescriptionRequiredBadge
 import com.example.ui.components.PrescriptionUploadDialog
 import com.example.ui.theme.BorderSoft
@@ -109,6 +111,7 @@ fun CartScreen(
     val savedAddresses by viewModel.deliveryAddresses.collectAsStateWithLifecycle()
 
     var showPrescriptionDialog by remember { mutableStateOf(false) }
+    var showQrScannerDialog by remember { mutableStateOf(false) }
     var isEditingAddress by remember { mutableStateOf(false) }
     var addressInput by remember { mutableStateOf(userAddress) }
     var selectedRegion by remember { mutableStateOf("Dakar") }
@@ -122,6 +125,14 @@ fun CartScreen(
     val total = subtotal + deliveryFee
 
     val hasPrescriptionItems = cartItems.any { it.requiresPrescription }
+
+    if (showQrScannerDialog) {
+        PrescriptionQrScannerDialog(
+            viewModel = viewModel,
+            onDismiss = { showQrScannerDialog = false },
+            onNavigateToCart = { showQrScannerDialog = false }
+        )
+    }
 
     if (showPrescriptionDialog) {
         PrescriptionUploadDialog(
@@ -182,13 +193,26 @@ fun CartScreen(
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                Button(
-                    onClick = onNavigateToCatalog,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
-                    modifier = Modifier.testTag("explore_medicines_button")
-                ) {
-                    Text("Explorer les médicaments", fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(
+                        onClick = onNavigateToCatalog,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
+                        modifier = Modifier.testTag("explore_medicines_button")
+                    ) {
+                        Text("Explorer les médicaments", fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = { showQrScannerDialog = true },
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MedicalTealPrimary),
+                        modifier = Modifier.testTag("empty_cart_scan_qr_button")
+                    ) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Scan QR Ordonnance", color = MedicalTealPrimary, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -310,20 +334,37 @@ fun CartScreen(
                                         }
                                     }
 
-                                    Button(
-                                        onClick = { showPrescriptionDialog = true },
-                                        shape = RoundedCornerShape(8.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (isPrescriptionAttached) MedicalTealPrimary else Color(0xFFE65100)
-                                        ),
-                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                                        modifier = Modifier.height(34.dp)
-                                    ) {
-                                        Text(
-                                            text = if (isPrescriptionAttached) "Modifier" else "Joindre photo",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Button(
+                                            onClick = { showQrScannerDialog = true },
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MedicalTealPrimary
+                                            ),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                            modifier = Modifier.height(34.dp)
+                                        ) {
+                                            Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(15.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Scan QR", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        Button(
+                                            onClick = { showPrescriptionDialog = true },
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (isPrescriptionAttached) MedicalTealLight else Color(0xFFE65100)
+                                            ),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                            modifier = Modifier.height(34.dp)
+                                        ) {
+                                            Text(
+                                                text = if (isPrescriptionAttached) "Photo" else "Photo",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isPrescriptionAttached) MedicalTealDark else Color.White
+                                            )
+                                        }
                                     }
                                 }
                             }

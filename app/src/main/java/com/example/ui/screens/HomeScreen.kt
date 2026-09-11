@@ -445,7 +445,7 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Validation pharmacien",
+                                text = "QR Code & Photo • Panier direct",
                                 fontSize = 12.sp,
                                 color = TextOnWhiteBlue,
                                 fontWeight = FontWeight.Medium,

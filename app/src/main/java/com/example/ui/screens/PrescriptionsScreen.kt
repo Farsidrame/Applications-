@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Medication
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -64,6 +66,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.PrescriptionEntity
 import com.example.ui.components.CertifiedBadge
 import com.example.ui.components.PrescriptionPharmacistValidationDialog
+import com.example.ui.components.PrescriptionQrScannerDialog
 import com.example.ui.components.PrescriptionUploadDialog
 import com.example.ui.theme.BorderSoft
 import com.example.ui.theme.MedicalEmeraldAccent
@@ -72,6 +75,7 @@ import com.example.ui.theme.MedicalTealLight
 import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
 import com.example.ui.theme.TextOnWhiteSecondary
 import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
@@ -86,9 +90,21 @@ fun PrescriptionsScreen(
     val prescriptions by viewModel.prescriptions.collectAsStateWithLifecycle()
     val allPharmacies by viewModel.allPharmacies.collectAsStateWithLifecycle()
     var showUploadDialog by remember { mutableStateOf(false) }
+    var showQrScannerDialog by remember { mutableStateOf(false) }
     var prescriptionToDelete by remember { mutableStateOf<PrescriptionEntity?>(null) }
     var prescriptionForPharmacistValidation by remember { mutableStateOf<PrescriptionEntity?>(null) }
     var successTransmissionBanner by remember { mutableStateOf<String?>(null) }
+
+    if (showQrScannerDialog) {
+        PrescriptionQrScannerDialog(
+            viewModel = viewModel,
+            onDismiss = { showQrScannerDialog = false },
+            onNavigateToCart = {
+                showQrScannerDialog = false
+                onNavigateToCart()
+            }
+        )
+    }
 
     if (showUploadDialog) {
         PrescriptionUploadDialog(
@@ -135,12 +151,15 @@ fun PrescriptionsScreen(
     if (prescriptionToDelete != null) {
         AlertDialog(
             onDismissRequest = { prescriptionToDelete = null },
-            title = { Text("Supprimer l'ordonnance ?", fontWeight = FontWeight.Bold) },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
+            title = { Text("Supprimer l'ordonnance ?", fontWeight = FontWeight.Bold, color = TextOnWhitePrimary) },
             text = {
                 Text(
                     text = "Voulez-vous supprimer cette ordonnance de votre carnet de santé ?",
                     fontSize = 13.sp,
-                    color = TextSecondaryMuted
+                    color = TextOnWhiteSecondary
                 )
             },
             confirmButton = {
@@ -157,7 +176,7 @@ fun PrescriptionsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { prescriptionToDelete = null }) {
-                    Text("Annuler", color = TextSecondaryMuted)
+                    Text("Annuler", color = Color(0xFF475569), fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -195,18 +214,33 @@ fun PrescriptionsScreen(
                     )
                 }
 
-                Button(
-                    onClick = { showUploadDialog = true },
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    modifier = Modifier
-                        .height(38.dp)
-                        .testTag("upload_new_prescription_button")
-                ) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Scanner", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { showQrScannerDialog = true },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                        modifier = Modifier
+                            .height(38.dp)
+                            .testTag("scan_prescription_qr_button")
+                    ) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Scan QR", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = { showUploadDialog = true },
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        modifier = Modifier
+                            .height(38.dp)
+                            .testTag("upload_new_prescription_button")
+                    ) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp), tint = MedicalTealPrimary)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Photo", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MedicalTealPrimary)
+                    }
                 }
             }
         }
@@ -216,6 +250,104 @@ fun PrescriptionsScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 90.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // Bannière Scan QR Code Ordonnance & Code-barres Boîtes Médicaments
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showQrScannerDialog = true }
+                        .testTag("hero_banner_scan_qr_code"),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F766E))
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        // Badge Jaune repositionné de manière proéminente en haut
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFFDE047))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.QrCodeScanner,
+                                        contentDescription = null,
+                                        tint = Color(0xFF78350F),
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "SCANNER UNIVERSEL • QR ORDONNANCE & CODE-BARRES BOÎTES",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color(0xFF78350F)
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = "Caméra ZXing HD",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCodeScanner,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Scanner Ordonnance & Boîtes",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Numérisez le QR code d'une ordonnance ou le code-barres (EAN-13/CIP) présent sur vos boîtes de médicaments pour les ajouter automatiquement au panier.",
+                                    fontSize = 11.5.sp,
+                                    color = Color.White.copy(alpha = 0.92f),
+                                    lineHeight = 15.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(
+                                onClick = { showQrScannerDialog = true },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White,
+                                    contentColor = Color(0xFF0F766E)
+                                ),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Text("Scanner", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
             // Success Transmission Banner
             if (successTransmissionBanner != null) {
                 item {
@@ -311,14 +443,25 @@ fun PrescriptionsScreen(
                                 color = TextSecondaryMuted
                             )
                             Spacer(modifier = Modifier.height(14.dp))
-                            Button(
-                                onClick = { showUploadDialog = true },
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary)
-                            ) {
-                                Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Ouvrir la Caméra Scanner")
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Button(
+                                    onClick = { showQrScannerDialog = true },
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary)
+                                ) {
+                                    Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Scanner QR Code")
+                                }
+
+                                OutlinedButton(
+                                    onClick = { showUploadDialog = true },
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp), tint = MedicalTealPrimary)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Photo Ordonnance", color = MedicalTealPrimary)
+                                }
                             }
                         }
                     }

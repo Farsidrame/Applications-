@@ -111,7 +111,9 @@ import com.example.ui.theme.MedicalTealPrimary
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
 import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteMuted
 import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.viewmodel.PharmaViewModel
@@ -154,6 +156,9 @@ fun OrderTrackingScreen(
     if (showCallModal) {
         AlertDialog(
             onDismissRequest = { showCallModal = false },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -167,8 +172,8 @@ fun OrderTrackingScreen(
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
-                        Text("Appel en cours...", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text(telemetry.courierName, fontSize = 12.sp, color = TextSecondaryMuted)
+                        Text("Appel en cours...", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextOnWhitePrimary)
+                        Text(telemetry.courierName, fontSize = 12.sp, color = TextOnWhiteMuted)
                     }
                 }
             },
@@ -177,7 +182,7 @@ fun OrderTrackingScreen(
                     Text(
                         text = "Numéro sécurisé du livreur : ${telemetry.courierPhone}\n\n« Bonjour ! Je suis Mamadou Ndiaye, votre livreur de santé PharmaDirect. Je suis actuellement à ${telemetry.distanceRemainingMeters}m de votre adresse avec votre sac isotherme scellé. »",
                         fontSize = 13.sp,
-                        color = TextPrimaryDark
+                        color = TextOnWhiteSecondary
                     )
                 }
             },
@@ -199,12 +204,15 @@ fun OrderTrackingScreen(
     if (showCancelDialog) {
         AlertDialog(
             onDismissRequest = { showCancelDialog = false },
-            title = { Text("Annuler cette commande ?", fontWeight = FontWeight.Bold) },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
+            title = { Text("Annuler cette commande ?", fontWeight = FontWeight.Bold, color = TextOnWhitePrimary) },
             text = {
                 Text(
                     text = "Le montant de ${displayOrder.totalFcfa} FCFA sera remboursé automatiquement sur votre compte ${displayOrder.paymentMethod}.\n\nConfirmez-vous l'annulation immédiate ?",
                     fontSize = 13.sp,
-                    color = TextSecondaryMuted
+                    color = TextOnWhiteSecondary
                 )
             },
             confirmButton = {
@@ -222,7 +230,7 @@ fun OrderTrackingScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showCancelDialog = false }) {
-                    Text("Non, retour", color = MedicalTealPrimary)
+                    Text("Non, retour", color = MedicalTealDark, fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -231,12 +239,15 @@ fun OrderTrackingScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Supprimer la commande ?", fontWeight = FontWeight.Bold) },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
+            title = { Text("Supprimer la commande ?", fontWeight = FontWeight.Bold, color = TextOnWhitePrimary) },
             text = {
                 Text(
                     text = "Voulez-vous supprimer définitivement la commande ${displayOrder.orderNumber} de votre historique ?",
                     fontSize = 13.sp,
-                    color = TextSecondaryMuted
+                    color = TextOnWhiteSecondary
                 )
             },
             confirmButton = {
@@ -254,7 +265,7 @@ fun OrderTrackingScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Annuler", color = TextSecondaryMuted)
+                    Text("Annuler", color = Color(0xFF475569), fontWeight = FontWeight.SemiBold)
                 }
             }
         )

@@ -55,6 +55,12 @@ import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.Dialpad
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -124,6 +130,8 @@ import com.example.ui.theme.VisaBlueColor
 import com.example.ui.theme.WaveBlueColor
 import com.example.ui.viewmodel.PaymentProcessState
 import com.example.ui.viewmodel.PharmaViewModel
+import com.example.util.MobilePaymentLauncher
+import com.example.util.PaymentLaunchResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -172,6 +180,14 @@ fun CheckoutPaymentScreen(
     // Payment Selection & Form Details
     var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.WAVE) }
     var mobileOrCardNumber by remember(userPhone) { mutableStateOf(userPhone) }
+
+    // Operator App Direct Open & Code Validation States
+    var mobileValidationMode by remember { mutableStateOf("DIRECT_APP") } // "DIRECT_APP" ou "BY_CODE"
+    var authCodeInput by remember { mutableStateOf("") }
+    var autoLaunchAppOnSelect by remember { mutableStateOf(true) }
+    var hasAppBeenLaunched by remember { mutableStateOf(false) }
+    var lastLaunchedAppName by remember { mutableStateOf("Wave") }
+    var launchStatusMessage by remember { mutableStateOf<String?>(null) }
     
     // Credit Card Form Specifics (Empty fields for user manual input)
     var cardHolderName by remember { mutableStateOf("") }
@@ -384,6 +400,23 @@ fun CheckoutPaymentScreen(
                                     mobileOrCardNumber
                                 }
 
+                                // Si mode application directe et l'app n'a pas encore été lancée, tenter de la lancer
+                                if (mobileValidationMode == "DIRECT_APP" && 
+                                    (selectedPaymentMethod == PaymentMethod.WAVE || 
+                                     selectedPaymentMethod == PaymentMethod.ORANGE_MONEY || 
+                                     selectedPaymentMethod == PaymentMethod.MTN_MOMO)) {
+                                    if (!hasAppBeenLaunched && MobilePaymentLauncher.isOperatorAppInstalled(context, selectedPaymentMethod)) {
+                                        MobilePaymentLauncher.launchOperatorApp(
+                                            context = context,
+                                            method = selectedPaymentMethod,
+                                            amountFcfa = total,
+                                            orderRef = "CMD-${System.currentTimeMillis() % 100000}",
+                                            clientPhone = mobileOrCardNumber,
+                                            notifyUser = true
+                                        )
+                                    }
+                                }
+
                                 viewModel.processOnlinePayment(
                                     items = cartItems,
                                     pharmacy = defaultPharmacy,
@@ -392,6 +425,8 @@ fun CheckoutPaymentScreen(
                                     patientPhone = currentRecipientPhone,
                                     paymentMethod = selectedPaymentMethod,
                                     mobileNumberOrCard = paymentParam,
+                                    validationMode = mobileValidationMode,
+                                    authCode = authCodeInput,
                                     onSuccess = { newOrder ->
                                         val paymentLinkUrl = when (selectedPaymentMethod) {
                                             PaymentMethod.WAVE -> "https://pay.wave.com/m/pharmadirect_sn?amount=$total&ref=${newOrder.orderNumber}"
@@ -416,7 +451,7 @@ fun CheckoutPaymentScreen(
                             Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Confirmer & Payer",
+                                text = if (mobileValidationMode == "DIRECT_APP" && hasAppBeenLaunched) "Valider le Paiement" else "Confirmer & Payer",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
@@ -794,8 +829,131 @@ fun CheckoutPaymentScreen(
 
             PaymentMethodSelector(
                 selectedMethod = selectedPaymentMethod,
-                onMethodSelected = { selectedPaymentMethod = it }
+                onMethodSelected = { method ->
+                    selectedPaymentMethod = method
+                    authCodeInput = ""
+                    // Lorsqu'un utilisateur choisit Wave ou Orange Money, le paiement s'ouvre directement dans l'application installée
+                    if (method == PaymentMethod.WAVE || method == PaymentMethod.ORANGE_MONEY || method == PaymentMethod.MTN_MOMO) {
+                        val isInstalled = MobilePaymentLauncher.isOperatorAppInstalled(context, method)
+                        if (autoLaunchAppOnSelect && isInstalled) {
+                            val launchRes = MobilePaymentLauncher.launchOperatorApp(
+                                context = context,
+                                method = method,
+                                amountFcfa = total,
+                                orderRef = "CMD-${System.currentTimeMillis() % 100000}",
+                                clientPhone = mobileOrCardNumber,
+                                notifyUser = true
+                            )
+                            if (launchRes is PaymentLaunchResult.Success) {
+                                hasAppBeenLaunched = true
+                                lastLaunchedAppName = launchRes.appName
+                                launchStatusMessage = launchRes.message
+                            }
+                        }
+                    }
+                }
             )
+
+            // Bannière interactive lorsque l'application de l'opérateur a été ouverte
+            if (hasAppBeenLaunched && (selectedPaymentMethod == PaymentMethod.WAVE || selectedPaymentMethod == PaymentMethod.ORANGE_MONEY || selectedPaymentMethod == PaymentMethod.MTN_MOMO)) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth().testTag("app_launched_status_banner"),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (selectedPaymentMethod == PaymentMethod.WAVE) WaveBlueColor.copy(alpha = 0.12f)
+                        else OrangeMoneyColor.copy(alpha = 0.12f)
+                    ),
+                    border = BorderStroke(
+                        1.5.dp,
+                        if (selectedPaymentMethod == PaymentMethod.WAVE) WaveBlueColor else OrangeMoneyColor
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.PhoneAndroid,
+                                contentDescription = null,
+                                tint = if (selectedPaymentMethod == PaymentMethod.WAVE) WaveBlueColor else OrangeMoneyColor,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Application $lastLaunchedAppName ouverte",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.5.sp,
+                                color = TextPrimaryDark
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "La transaction de $total FCFA a été transmise à $lastLaunchedAppName. Confirmez directement dans l'application ou saisissez votre code d'autorisation.",
+                            fontSize = 11.5.sp,
+                            color = TextSecondaryMuted
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    viewModel.processOnlinePayment(
+                                        items = cartItems,
+                                        pharmacy = defaultPharmacy,
+                                        deliveryAddress = currentDeliveryAddressString,
+                                        patientName = currentRecipientName,
+                                        patientPhone = currentRecipientPhone,
+                                        paymentMethod = selectedPaymentMethod,
+                                        mobileNumberOrCard = mobileOrCardNumber,
+                                        validationMode = "DIRECT_APP",
+                                        authCode = authCodeInput,
+                                        onSuccess = { newOrder ->
+                                            val paymentLinkUrl = when (selectedPaymentMethod) {
+                                                PaymentMethod.WAVE -> "https://pay.wave.com/m/pharmadirect_sn?amount=$total&ref=${newOrder.orderNumber}"
+                                                PaymentMethod.ORANGE_MONEY -> "https://pay.orange-money.sn/checkout?id=PHARMADIRECT&amt=$total&order=${newOrder.orderNumber}"
+                                                else -> "https://pay.pharmadirect.sn/checkout?amt=$total&order=${newOrder.orderNumber}"
+                                            }
+                                            viewModel.triggerPaymentLinkSms(newOrder, paymentLinkUrl)
+                                            viewModel.triggerInvoiceSms(newOrder)
+                                            onPaymentSuccess(newOrder)
+                                        }
+                                    )
+                                },
+                                modifier = Modifier.weight(1f).height(40.dp).testTag("direct_app_validated_button"),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("J'ai validé dans l'app", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    MobilePaymentLauncher.launchOperatorApp(
+                                        context = context,
+                                        method = selectedPaymentMethod,
+                                        amountFcfa = total,
+                                        orderRef = "CMD-${System.currentTimeMillis() % 100000}",
+                                        clientPhone = mobileOrCardNumber,
+                                        notifyUser = true
+                                    )
+                                },
+                                modifier = Modifier.height(40.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(15.dp), tint = TextPrimaryDark)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Relancer", fontSize = 11.5.sp, color = TextPrimaryDark)
+                            }
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -809,114 +967,594 @@ fun CheckoutPaymentScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     when (selectedPaymentMethod) {
                         PaymentMethod.WAVE -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(WaveBlueColor),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("W", color = Color.White, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                            val isWaveInstalled = remember(context) {
+                                MobilePaymentLauncher.isOperatorAppInstalled(context, PaymentMethod.WAVE)
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(WaveBlueColor),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("W", color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text("Wave Mobile Money", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = TextPrimaryDark)
+                                        Text(
+                                            if (isWaveInstalled) "Application Wave prête sur votre smartphone" else "Validation rapide 0% de frais",
+                                            fontSize = 11.sp,
+                                            color = TextSecondaryMuted
+                                        )
+                                    }
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text("Paiement 1-Click Wave Sénégal", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimaryDark)
-                                    Text("Une notification de débit sécurisée vous sera envoyée", fontSize = 10.5.sp, color = TextSecondaryMuted)
+
+                                if (isWaveInstalled) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = Color(0xFFE0F2FE),
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = WaveBlueColor, modifier = Modifier.size(12.dp))
+                                            Spacer(modifier = Modifier.width(3.dp))
+                                            Text("App Installée", color = WaveBlueColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
 
-                            OutlinedTextField(
-                                value = mobileOrCardNumber,
-                                onValueChange = { mobileOrCardNumber = it },
-                                label = { Text("Numéro de compte Wave") },
-                                placeholder = { Text("Numéro mobile Wave") },
-                                modifier = Modifier.fillMaxWidth().testTag("payment_account_input"),
+                            // Onglets de choix du mode de validation : Dans l'App vs Par Code
+                            Surface(
                                 shape = RoundedCornerShape(10.dp),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = WaveBlueColor),
-                                leadingIcon = {
-                                    Icon(Icons.Default.Phone, contentDescription = null, tint = WaveBlueColor)
-                                }
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(WaveBlueColor.copy(alpha = 0.08f))
-                                    .padding(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                color = Color(0xFFF1F5F9),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Icon(Icons.Default.QrCode, contentDescription = null, tint = WaveBlueColor, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { mobileValidationMode = "DIRECT_APP" }
+                                            .testTag("mode_direct_app_wave"),
+                                        color = if (mobileValidationMode == "DIRECT_APP") Color.White else Color.Transparent,
+                                        shadowElevation = if (mobileValidationMode == "DIRECT_APP") 2.dp else 0.dp
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.Default.PhoneAndroid,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp),
+                                                tint = if (mobileValidationMode == "DIRECT_APP") WaveBlueColor else TextSecondaryMuted
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Dans l'App Wave",
+                                                fontWeight = if (mobileValidationMode == "DIRECT_APP") FontWeight.Bold else FontWeight.Normal,
+                                                fontSize = 12.sp,
+                                                color = if (mobileValidationMode == "DIRECT_APP") TextPrimaryDark else TextSecondaryMuted
+                                            )
+                                        }
+                                    }
+
+                                    Surface(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { mobileValidationMode = "BY_CODE" }
+                                            .testTag("mode_by_code_wave"),
+                                        color = if (mobileValidationMode == "BY_CODE") Color.White else Color.Transparent,
+                                        shadowElevation = if (mobileValidationMode == "BY_CODE") 2.dp else 0.dp
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Key,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(15.dp),
+                                                tint = if (mobileValidationMode == "BY_CODE") WaveBlueColor else TextSecondaryMuted
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Saisir un code",
+                                                fontWeight = if (mobileValidationMode == "BY_CODE") FontWeight.Bold else FontWeight.Normal,
+                                                fontSize = 12.sp,
+                                                color = if (mobileValidationMode == "BY_CODE") TextPrimaryDark else TextSecondaryMuted
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            if (mobileValidationMode == "DIRECT_APP") {
+                                // MODE 1 : Validation directe dans l'application Wave
+                                if (isWaveInstalled) {
+                                    Button(
+                                        onClick = {
+                                            val res = MobilePaymentLauncher.launchOperatorApp(
+                                                context = context,
+                                                method = PaymentMethod.WAVE,
+                                                amountFcfa = total,
+                                                orderRef = "CMD-${System.currentTimeMillis() % 100000}",
+                                                clientPhone = mobileOrCardNumber,
+                                                notifyUser = true
+                                            )
+                                            if (res is PaymentLaunchResult.Success) {
+                                                hasAppBeenLaunched = true
+                                                lastLaunchedAppName = res.appName
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth().height(48.dp).testTag("open_wave_app_button"),
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = WaveBlueColor)
+                                    ) {
+                                        Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Ouvrir l'application Wave ($total FCFA)", fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(WaveBlueColor.copy(alpha = 0.08f))
+                                            .padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Default.Info, contentDescription = null, tint = WaveBlueColor, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "1. L'application Wave s'ouvre directement.\n2. Validez le débit avec votre empreinte ou code.\n3. Revenez ici : votre commande est confirmée !",
+                                            fontSize = 11.sp,
+                                            color = TextPrimaryDark,
+                                            lineHeight = 16.sp
+                                        )
+                                    }
+                                } else {
+                                    // Application non installée
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color(0xFFFFFBEB))
+                                            .padding(12.dp)
+                                    ) {
+                                        Text(
+                                            text = "L'application Wave n'est pas installée sur ce téléphone.",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color(0xFF92400E)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            OutlinedButton(
+                                                onClick = { MobilePaymentLauncher.openPlayStore(context, "com.wave.personal") },
+                                                modifier = Modifier.weight(1f).height(36.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                contentPadding = PaddingValues(horizontal = 6.dp)
+                                            ) {
+                                                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(14.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Installer Wave", fontSize = 11.sp)
+                                            }
+                                            Button(
+                                                onClick = { mobileValidationMode = "BY_CODE" },
+                                                modifier = Modifier.weight(1f).height(36.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = WaveBlueColor),
+                                                contentPadding = PaddingValues(horizontal = 6.dp)
+                                            ) {
+                                                Text("Payer par code", fontSize = 11.sp)
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                // MODE 2 : Validation par code secret / OTP
+                                OutlinedTextField(
+                                    value = mobileOrCardNumber,
+                                    onValueChange = { mobileOrCardNumber = it },
+                                    label = { Text("Numéro Wave") },
+                                    placeholder = { Text("Ex: 77 123 45 67") },
+                                    modifier = Modifier.fillMaxWidth().testTag("payment_account_input"),
+                                    shape = RoundedCornerShape(10.dp),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = WaveBlueColor),
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Phone, contentDescription = null, tint = WaveBlueColor)
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = authCodeInput,
+                                    onValueChange = { if (it.length <= 6) authCodeInput = it },
+                                    label = { Text("Code secret / Code de confirmation Wave") },
+                                    placeholder = { Text("Code à 4 ou 6 chiffres") },
+                                    modifier = Modifier.fillMaxWidth().testTag("auth_code_wave_input"),
+                                    shape = RoundedCornerShape(10.dp),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = WaveBlueColor),
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Lock, contentDescription = null, tint = WaveBlueColor)
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = "Validation instantanée par QR code ou notification push Wave",
+                                    text = "Saisissez votre code secret Wave pour valider instantanément la transaction.",
                                     fontSize = 11.sp,
-                                    color = WaveBlueColor,
-                                    fontWeight = FontWeight.Medium
+                                    color = TextSecondaryMuted
                                 )
                             }
                         }
 
                         PaymentMethod.ORANGE_MONEY -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(OrangeMoneyColor),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("OM", color = Color.White, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                            val isOmInstalled = remember(context) {
+                                MobilePaymentLauncher.isOperatorAppInstalled(context, PaymentMethod.ORANGE_MONEY)
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(OrangeMoneyColor),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("OM", color = Color.White, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text("Orange Money Sénégal", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = TextPrimaryDark)
+                                        Text(
+                                            if (isOmInstalled) "Application Orange Money prête sur votre smartphone" else "Validation via App ou code #144#391#",
+                                            fontSize = 11.sp,
+                                            color = TextSecondaryMuted
+                                        )
+                                    }
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text("Paiement Orange Money Sénégal", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimaryDark)
-                                    Text("Générez votre code d'autorisation via le #144#391#", fontSize = 10.5.sp, color = TextSecondaryMuted)
+
+                                if (isOmInstalled) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = Color(0xFFFFEDD5),
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = OrangeMoneyColor, modifier = Modifier.size(12.dp))
+                                            Spacer(modifier = Modifier.width(3.dp))
+                                            Text("App Installée", color = OrangeMoneyColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
 
-                            OutlinedTextField(
-                                value = mobileOrCardNumber,
-                                onValueChange = { mobileOrCardNumber = it },
-                                label = { Text("Numéro Orange Money") },
-                                placeholder = { Text("Numéro mobile Orange Money") },
-                                modifier = Modifier.fillMaxWidth().testTag("payment_account_input"),
+                            // Onglets de choix : Dans l'App vs Par Code
+                            Surface(
                                 shape = RoundedCornerShape(10.dp),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = OrangeMoneyColor),
-                                leadingIcon = {
-                                    Icon(Icons.Default.Phone, contentDescription = null, tint = OrangeMoneyColor)
+                                color = Color(0xFFF1F5F9),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { mobileValidationMode = "DIRECT_APP" }
+                                            .testTag("mode_direct_app_om"),
+                                        color = if (mobileValidationMode == "DIRECT_APP") Color.White else Color.Transparent,
+                                        shadowElevation = if (mobileValidationMode == "DIRECT_APP") 2.dp else 0.dp
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.Default.PhoneAndroid,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp),
+                                                tint = if (mobileValidationMode == "DIRECT_APP") OrangeMoneyColor else TextSecondaryMuted
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Dans l'App OM",
+                                                fontWeight = if (mobileValidationMode == "DIRECT_APP") FontWeight.Bold else FontWeight.Normal,
+                                                fontSize = 12.sp,
+                                                color = if (mobileValidationMode == "DIRECT_APP") TextPrimaryDark else TextSecondaryMuted
+                                            )
+                                        }
+                                    }
+
+                                    Surface(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { mobileValidationMode = "BY_CODE" }
+                                            .testTag("mode_by_code_om"),
+                                        color = if (mobileValidationMode == "BY_CODE") Color.White else Color.Transparent,
+                                        shadowElevation = if (mobileValidationMode == "BY_CODE") 2.dp else 0.dp
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Dialpad,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(15.dp),
+                                                tint = if (mobileValidationMode == "BY_CODE") OrangeMoneyColor else TextSecondaryMuted
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Code #144#391#",
+                                                fontWeight = if (mobileValidationMode == "BY_CODE") FontWeight.Bold else FontWeight.Normal,
+                                                fontSize = 12.sp,
+                                                color = if (mobileValidationMode == "BY_CODE") TextPrimaryDark else TextSecondaryMuted
+                                            )
+                                        }
+                                    }
                                 }
-                            )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            if (mobileValidationMode == "DIRECT_APP") {
+                                // MODE 1 : Validation directe dans Orange Money
+                                if (isOmInstalled) {
+                                    Button(
+                                        onClick = {
+                                            val res = MobilePaymentLauncher.launchOperatorApp(
+                                                context = context,
+                                                method = PaymentMethod.ORANGE_MONEY,
+                                                amountFcfa = total,
+                                                orderRef = "CMD-${System.currentTimeMillis() % 100000}",
+                                                clientPhone = mobileOrCardNumber,
+                                                notifyUser = true
+                                            )
+                                            if (res is PaymentLaunchResult.Success) {
+                                                hasAppBeenLaunched = true
+                                                lastLaunchedAppName = res.appName
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth().height(48.dp).testTag("open_om_app_button"),
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = OrangeMoneyColor)
+                                    ) {
+                                        Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Ouvrir Orange Money ($total FCFA)", fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(OrangeMoneyColor.copy(alpha = 0.08f))
+                                            .padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Default.Info, contentDescription = null, tint = OrangeMoneyColor, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "1. L'application Orange Money s'ouvre automatiquement.\n2. Autorisez la transaction avec votre code secret.\n3. Revenez ici pour finaliser la commande.",
+                                            fontSize = 11.sp,
+                                            color = TextPrimaryDark,
+                                            lineHeight = 16.sp
+                                        )
+                                    }
+                                } else {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color(0xFFFFFBEB))
+                                            .padding(12.dp)
+                                    ) {
+                                        Text(
+                                            text = "L'application Orange Money n'est pas installée sur ce téléphone.",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color(0xFF92400E)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            OutlinedButton(
+                                                onClick = { MobilePaymentLauncher.openPlayStore(context, "com.orange.orangemoneysenegal") },
+                                                modifier = Modifier.weight(1f).height(36.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                contentPadding = PaddingValues(horizontal = 6.dp)
+                                            ) {
+                                                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(14.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Installer OM", fontSize = 11.sp)
+                                            }
+                                            Button(
+                                                onClick = { mobileValidationMode = "BY_CODE" },
+                                                modifier = Modifier.weight(1f).height(36.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = OrangeMoneyColor),
+                                                contentPadding = PaddingValues(horizontal = 6.dp)
+                                            ) {
+                                                Text("Utiliser le code", fontSize = 11.sp)
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                // MODE 2 : Validation par code d'autorisation #144#391#
+                                OutlinedTextField(
+                                    value = mobileOrCardNumber,
+                                    onValueChange = { mobileOrCardNumber = it },
+                                    label = { Text("Numéro Orange Money") },
+                                    placeholder = { Text("Ex: 77 000 00 00") },
+                                    modifier = Modifier.fillMaxWidth().testTag("payment_account_input"),
+                                    shape = RoundedCornerShape(10.dp),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = OrangeMoneyColor),
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Phone, contentDescription = null, tint = OrangeMoneyColor)
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Bouton 1-clic pour composer directement le code USSD #144#391#
+                                OutlinedButton(
+                                    onClick = {
+                                        MobilePaymentLauncher.openUssdDialer(context, "#144#391#")
+                                    },
+                                    modifier = Modifier.fillMaxWidth().height(42.dp).testTag("dial_orange_ussd_button"),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, OrangeMoneyColor),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = OrangeMoneyColor)
+                                ) {
+                                    Icon(Icons.Default.Dialpad, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Composer #144#391# pour générer le code", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = authCodeInput,
+                                    onValueChange = { if (it.length <= 6) authCodeInput = it },
+                                    label = { Text("Code d'autorisation temporaire (4 chiffres)") },
+                                    placeholder = { Text("Ex: 1234") },
+                                    modifier = Modifier.fillMaxWidth().testTag("auth_code_om_input"),
+                                    shape = RoundedCornerShape(10.dp),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = OrangeMoneyColor),
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Key, contentDescription = null, tint = OrangeMoneyColor)
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "Ce code temporaire à usage unique garantit que votre code secret principal reste confidentiel.",
+                                    fontSize = 11.sp,
+                                    color = TextSecondaryMuted
+                                )
+                            }
                         }
 
                         PaymentMethod.MTN_MOMO -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(MtnMomoYellow),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("M", color = TextPrimaryDark, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                            val isMomoInstalled = remember(context) {
+                                MobilePaymentLauncher.isOperatorAppInstalled(context, PaymentMethod.MTN_MOMO)
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(MtnMomoYellow),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("M", color = TextPrimaryDark, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text("MTN Mobile Money", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = TextPrimaryDark)
+                                        Text(
+                                            if (isMomoInstalled) "App MTN MoMo disponible" else "Validation sécurisée par code secret OTP",
+                                            fontSize = 11.sp,
+                                            color = TextSecondaryMuted
+                                        )
+                                    }
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text("MTN Mobile Money", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimaryDark)
-                                    Text("Validation sécurisée par code secret OTP", fontSize = 10.5.sp, color = TextSecondaryMuted)
+
+                                if (isMomoInstalled) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = Color(0xFFFEF3C7),
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    ) {
+                                        Text("App Installée", color = Color(0xFFB45309), fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp))
+                                    }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            if (isMomoInstalled) {
+                                Button(
+                                    onClick = {
+                                        val res = MobilePaymentLauncher.launchOperatorApp(
+                                            context = context,
+                                            method = PaymentMethod.MTN_MOMO,
+                                            amountFcfa = total,
+                                            orderRef = "CMD-${System.currentTimeMillis() % 100000}",
+                                            clientPhone = mobileOrCardNumber,
+                                            notifyUser = true
+                                        )
+                                        if (res is PaymentLaunchResult.Success) {
+                                            hasAppBeenLaunched = true
+                                            lastLaunchedAppName = res.appName
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth().height(46.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MtnMomoYellow)
+                                ) {
+                                    Icon(Icons.Default.OpenInNew, contentDescription = null, tint = TextPrimaryDark, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Ouvrir l'application MoMo ($total FCFA)", color = TextPrimaryDark, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
 
                             OutlinedTextField(
                                 value = mobileOrCardNumber,
@@ -928,6 +1566,22 @@ fun CheckoutPaymentScreen(
                                 colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MtnMomoYellow),
                                 leadingIcon = {
                                     Icon(Icons.Default.Phone, contentDescription = null, tint = MtnMomoYellow)
+                                }
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            OutlinedTextField(
+                                value = authCodeInput,
+                                onValueChange = { authCodeInput = it },
+                                label = { Text("Code secret OTP MoMo") },
+                                modifier = Modifier.fillMaxWidth().testTag("auth_code_momo_input"),
+                                shape = RoundedCornerShape(10.dp),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                visualTransformation = PasswordVisualTransformation(),
+                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MtnMomoYellow),
+                                leadingIcon = {
+                                    Icon(Icons.Default.Lock, contentDescription = null, tint = MtnMomoYellow)
                                 }
                             )
                         }

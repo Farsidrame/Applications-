@@ -61,11 +61,14 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.TwoWheeler
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.VpnKey
 import com.example.auth.AuthUser
 import com.example.ui.components.DeleteAccountDialog
+import com.example.ui.components.EditProfileDialog
+import com.example.ui.components.ForgotPasswordDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -140,6 +143,9 @@ import com.example.ui.theme.SafeBlueLight
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteMuted
 import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
 import com.example.ui.util.InvoicePrinterHelper
@@ -242,9 +248,9 @@ fun ProfileScreen(
         ),
         ProfileMenuItem(
             index = 6,
-            title = "Paramètres & Sécurité Anti-Piratage",
-            subtitle = "Chiffrement matériel AES-256, biométrie & protection TEE",
-            icon = Icons.Default.Shield,
+            title = "Paramètres du Compte & Sécurité",
+            subtitle = "Identifiant, mot de passe, modifier profil & suppression",
+            icon = Icons.Default.Settings,
             iconTint = VerifiedBadgeGreen,
             iconBg = VerifiedBadgeBg,
             countBadge = "Sécurisé",
@@ -254,6 +260,10 @@ fun ProfileScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+
+    // Dialog state for Edit Profile & Forgot Password
+    var showEditProfileDialog by remember { mutableStateOf(false) }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
 
     // Dialog state for Address Add/Edit
     var showAddressDialog by remember { mutableStateOf(false) }
@@ -344,8 +354,11 @@ fun ProfileScreen(
                                 }
                             }
                         },
-                        onDeleteAccount = {
-                            showDeleteAccountDialog = true
+                        onEditProfile = {
+                            showEditProfileDialog = true
+                        },
+                        onOpenSettings = {
+                            activeMenuIndex = 6
                         }
                     )
 
@@ -353,7 +366,7 @@ fun ProfileScreen(
                     UserProfileDirectCard(
                         profile = userProfile,
                         currentUser = currentUser,
-                        onEditProfile = { activeMenuIndex = 0 },
+                        onEditProfile = { showEditProfileDialog = true },
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                     )
 
@@ -477,67 +490,6 @@ fun ProfileScreen(
                                         modifier = Modifier.size(14.dp)
                                     )
                                 }
-                            }
-                        }
-
-                        // Suppression Définitive du Compte & Identifiant Card
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("btn_menu_delete_account")
-                                .clickable { showDeleteAccountDialog = true },
-                            shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1212)),
-                            border = BorderStroke(1.dp, Color(0xFF7F1D1D).copy(alpha = 0.5f)),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF3F1515)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PersonRemove,
-                                        contentDescription = "Supprimer mon compte",
-                                        tint = Color(0xFFEF4444),
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(14.dp))
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "Supprimer mon Compte & Identifiant",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFFFCA5A5)
-                                    )
-                                    Spacer(modifier = Modifier.height(3.dp))
-                                    Text(
-                                        text = "Effacement irréversible du compte, identifiant, ordonnances et données de santé",
-                                        fontSize = 11.5.sp,
-                                        color = Color.White.copy(alpha = 0.8f),
-                                        lineHeight = 15.sp
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                                    contentDescription = "Ouvrir",
-                                    tint = Color(0xFFEF4444).copy(alpha = 0.7f),
-                                    modifier = Modifier.size(14.dp)
-                                )
                             }
                         }
                     }
@@ -727,6 +679,12 @@ fun ProfileScreen(
                             onDeleteAccount = {
                                 showDeleteAccountDialog = true
                             },
+                            onForgotPassword = {
+                                showForgotPasswordDialog = true
+                            },
+                            onEditProfile = {
+                                showEditProfileDialog = true
+                            },
                             onShowMessage = { msg ->
                                 coroutineScope.launch {
                                     snackbarHostState.showSnackbar(msg)
@@ -836,8 +794,11 @@ fun ProfileScreen(
     addressToDelete?.let { addr ->
         AlertDialog(
             onDismissRequest = { addressToDelete = null },
-            title = { Text(text = "Supprimer l'adresse ?", fontWeight = FontWeight.Bold) },
-            text = { Text(text = "Êtes-vous sûr de vouloir supprimer l'adresse \"${addr.title}\" ?") },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
+            title = { Text(text = "Supprimer l'adresse ?", fontWeight = FontWeight.Bold, color = TextOnWhitePrimary) },
+            text = { Text(text = "Êtes-vous sûr de vouloir supprimer l'adresse \"${addr.title}\" ?", color = TextOnWhiteSecondary) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -849,12 +810,12 @@ fun ProfileScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Supprimer", color = Color.White)
+                    Text("Supprimer", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { addressToDelete = null }) {
-                    Text("Annuler")
+                    Text("Annuler", color = Color(0xFF475569), fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -864,8 +825,11 @@ fun ProfileScreen(
     courierToDelete?.let { courier ->
         AlertDialog(
             onDismissRequest = { courierToDelete = null },
-            title = { Text(text = "Supprimer le coursier ?", fontWeight = FontWeight.Bold) },
-            text = { Text(text = "Voulez-vous retirer \"${courier.fullName}\" (${courier.phoneNumber}) de votre flotte ?") },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
+            title = { Text(text = "Supprimer le coursier ?", fontWeight = FontWeight.Bold, color = TextOnWhitePrimary) },
+            text = { Text(text = "Voulez-vous retirer \"${courier.fullName}\" (${courier.phoneNumber}) de votre flotte ?", color = TextOnWhiteSecondary) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -877,12 +841,12 @@ fun ProfileScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Supprimer", color = Color.White)
+                    Text("Supprimer", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { courierToDelete = null }) {
-                    Text("Annuler")
+                    Text("Annuler", color = Color(0xFF475569), fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -914,6 +878,55 @@ fun ProfileScreen(
             }
         )
     }
+
+    // Modal Dialog: Modification du Profil
+    if (showEditProfileDialog) {
+        EditProfileDialog(
+            profile = userProfile,
+            currentUser = currentUser,
+            onDismiss = { showEditProfileDialog = false },
+            onSave = { fullName, email, phone, secPhone, emerName, emerPhone, blood, allergies, paymentMethod, medNotes, role ->
+                viewModel.updateContactDetails(
+                    fullName = fullName,
+                    email = email,
+                    phoneNumber = phone,
+                    secondaryPhone = secPhone,
+                    emergencyContactName = emerName,
+                    emergencyContactPhone = emerPhone,
+                    bloodGroup = blood,
+                    knownAllergies = allergies,
+                    preferredPaymentMethod = paymentMethod,
+                    medicalNotes = medNotes,
+                    userRole = role,
+                    onSuccess = {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("Profil mis à jour avec succès !")
+                        }
+                    }
+                )
+            }
+        )
+    }
+
+    // Modal Dialog: Mot de Passe Oublié / Récupération de Compte
+    if (showForgotPasswordDialog) {
+        val initialEmail = currentUser?.email ?: userProfile?.email ?: ""
+        val initialPhone = currentUser?.phoneNumber ?: userProfile?.phoneNumber ?: ""
+        ForgotPasswordDialog(
+            initialEmail = initialEmail,
+            initialPhone = initialPhone,
+            onDismiss = { showForgotPasswordDialog = false },
+            onSendEmailReset = { email, onSuccess, onError ->
+                viewModel.sendPasswordReset(email, onSuccess, onError)
+            },
+            onResetPasswordWithEmail = { email, newPass, onSuccess, onError ->
+                viewModel.resetPasswordFromEmailLink(email, newPass, onSuccess, onError)
+            },
+            onResetWithPhoneOtp = { phone, code, newPass, onSuccess, onError ->
+                viewModel.resetPasswordWithCode(phone, code, newPass, onSuccess, onError)
+            }
+        )
+    }
 }
 
 @Composable
@@ -927,7 +940,8 @@ private fun ProfileHeroCard(
     couriersCount: Int,
     onOpenAuth: () -> Unit,
     onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit = {}
+    onEditProfile: () -> Unit = {},
+    onOpenSettings: () -> Unit = {}
 ) {
     val isAuthenticated = currentUser != null || (profile != null && profile.firebaseUid.isNotBlank())
     val name = when {
@@ -1084,23 +1098,39 @@ private fun ProfileHeroCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
-                        onClick = onOpenAuth,
+                        onClick = onEditProfile,
                         modifier = Modifier
                             .weight(1f)
                             .height(34.dp)
-                            .testTag("btn_switch_auth"),
+                            .testTag("btn_hero_edit_profile"),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MedicalTealPrimary),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MedicalTealPrimary),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(13.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text("Modifier", fontSize = 10.5.sp, color = MedicalTealPrimary, fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier
+                            .weight(1.1f)
+                            .height(34.dp)
+                            .testTag("btn_hero_settings"),
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(13.dp))
+                        Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(13.dp))
                         Spacer(modifier = Modifier.width(3.dp))
-                        Text("Changer", fontSize = 10.5.sp)
+                        Text("Paramètres", fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold)
                     }
 
                     OutlinedButton(
                         onClick = onSignOut,
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(0.9f)
                             .height(34.dp)
                             .testTag("btn_hero_signout"),
                         shape = RoundedCornerShape(8.dp),
@@ -1111,21 +1141,6 @@ private fun ProfileHeroCard(
                         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(13.dp))
                         Spacer(modifier = Modifier.width(3.dp))
                         Text("Quitter", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
-                    }
-
-                    Button(
-                        onClick = onDeleteAccount,
-                        modifier = Modifier
-                            .weight(1.2f)
-                            .height(34.dp)
-                            .testTag("btn_hero_delete_account"),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Icon(Icons.Default.PersonRemove, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text("Supprimer", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
@@ -1246,7 +1261,7 @@ private fun ContactInformationTab(
                                 color = if (isAuthenticated) VerifiedBadgeGreen else SafeBlueSecondary
                             )
                             Text(
-                                text = if (isAuthenticated) "UID: ${(currentUser?.uid ?: profile?.firebaseUid)?.take(14)}..." else "Connectez-vous pour protéger vos données",
+                                text = if (isAuthenticated) "Compte synchronisé et protégé en toute sécurité" else "Connectez-vous pour protéger vos données",
                                 fontSize = 11.sp,
                                 color = TextSecondaryMuted
                             )
@@ -1307,28 +1322,6 @@ private fun ContactInformationTab(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Déconnexion", fontSize = 11.sp, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    TextButton(
-                        onClick = onDeleteAccount,
-                        contentPadding = PaddingValues(0.dp),
-                        modifier = Modifier.testTag("btn_delete_account_link_contact")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PersonRemove,
-                            contentDescription = null,
-                            modifier = Modifier.size(15.dp),
-                            tint = Color(0xFFEF4444)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Supprimer mon compte & identifiant",
-                            fontSize = 11.sp,
-                            color = Color(0xFFEF4444),
-                            fontWeight = FontWeight.SemiBold
-                        )
                     }
 
                     passwordResetStatus?.let {
@@ -2133,6 +2126,8 @@ private fun InvoicesTab(
 ) {
     var selectedSection by remember { mutableIntStateOf(0) } // 0: Factures, 1: SMS reçus
     var showDeleteAllSmsConfirmDialog by remember { mutableStateOf(false) }
+    var showDeleteBillingSmsConfirmDialog by remember { mutableStateOf(false) }
+    var orderSmsToDelete by remember { mutableStateOf<OrderEntity?>(null) }
 
     val billingSmsList = remember(smsNotifications) {
         smsNotifications.filter { sms ->
@@ -2270,7 +2265,7 @@ private fun InvoicesTab(
                 ) {
                     if (billingSmsList.isNotEmpty()) {
                         OutlinedButton(
-                            onClick = onDeleteAllBillingSms,
+                            onClick = { showDeleteBillingSmsConfirmDialog = true },
                             modifier = Modifier.weight(1f).height(38.dp),
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
@@ -2419,7 +2414,7 @@ private fun InvoicesTab(
                                 }
 
                                 IconButton(
-                                    onClick = { onDeleteBillingSmsForOrder(order.id) },
+                                    onClick = { orderSmsToDelete = order },
                                     modifier = Modifier.size(38.dp)
                                 ) {
                                     Icon(
@@ -2570,8 +2565,17 @@ private fun InvoicesTab(
     if (showDeleteAllSmsConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAllSmsConfirmDialog = false },
-            title = { Text("Supprimer tous les SMS ?", fontWeight = FontWeight.Bold) },
-            text = { Text("Voulez-vous vraiment effacer l'historique complet des SMS de facturation et de livraison ?") },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
+            title = { Text("Supprimer tous les SMS ?", fontWeight = FontWeight.Bold, color = TextOnWhitePrimary) },
+            text = {
+                Text(
+                    text = "Voulez-vous vraiment effacer l'historique complet des SMS de facturation et de livraison ?",
+                    color = TextOnWhiteSecondary,
+                    fontSize = 13.sp
+                )
+            },
             confirmButton = {
                 Button(
                     onClick = {
@@ -2585,7 +2589,73 @@ private fun InvoicesTab(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteAllSmsConfirmDialog = false }) {
-                    Text("Annuler")
+                    Text("Annuler", color = Color(0xFF475569), fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
+    }
+
+    if (showDeleteBillingSmsConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteBillingSmsConfirmDialog = false },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
+            title = { Text("Supprimer les SMS Factures ?", fontWeight = FontWeight.Bold, color = TextOnWhitePrimary) },
+            text = {
+                Text(
+                    text = "Voulez-vous supprimer l'ensemble des notifications SMS liées aux factures et règlements fiscaux ?",
+                    color = TextOnWhiteSecondary,
+                    fontSize = 13.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteAllBillingSms()
+                        showDeleteBillingSmsConfirmDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Supprimer", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteBillingSmsConfirmDialog = false }) {
+                    Text("Annuler", color = Color(0xFF475569), fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
+    }
+
+    orderSmsToDelete?.let { order ->
+        AlertDialog(
+            onDismissRequest = { orderSmsToDelete = null },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
+            title = { Text("Supprimer le SMS de la facture ?", fontWeight = FontWeight.Bold, color = TextOnWhitePrimary) },
+            text = {
+                Text(
+                    text = "Voulez-vous supprimer les notifications SMS associées à la facture de la commande ${order.orderNumber} ?",
+                    color = TextOnWhiteSecondary,
+                    fontSize = 13.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteBillingSmsForOrder(order.id)
+                        orderSmsToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Supprimer", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { orderSmsToDelete = null }) {
+                    Text("Annuler", color = Color(0xFF475569), fontWeight = FontWeight.SemiBold)
                 }
             }
         )

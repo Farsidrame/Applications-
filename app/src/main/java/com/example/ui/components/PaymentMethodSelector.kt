@@ -31,6 +31,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,7 +53,9 @@ import com.example.ui.theme.TextOnWhitePrimary
 import com.example.ui.theme.TextOnWhiteSecondary
 import com.example.ui.theme.MedicalTealDark
 import com.example.ui.theme.VisaBlueColor
+import androidx.compose.ui.platform.LocalContext
 import com.example.ui.theme.WaveBlueColor
+import com.example.util.MobilePaymentLauncher
 
 @Composable
 fun PaymentMethodSelector(
@@ -60,6 +63,17 @@ fun PaymentMethodSelector(
     onMethodSelected: (PaymentMethod) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val isWaveInstalled = remember(context) {
+        MobilePaymentLauncher.isOperatorAppInstalled(context, PaymentMethod.WAVE)
+    }
+    val isOmInstalled = remember(context) {
+        MobilePaymentLauncher.isOperatorAppInstalled(context, PaymentMethod.ORANGE_MONEY)
+    }
+    val isMomoInstalled = remember(context) {
+        MobilePaymentLauncher.isOperatorAppInstalled(context, PaymentMethod.MTN_MOMO)
+    }
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -67,10 +81,11 @@ fun PaymentMethodSelector(
         PaymentMethodOption(
             method = PaymentMethod.WAVE,
             title = "Wave Mobile Money",
-            subtitle = "Paiement direct instantané sans frais (0%) • Validation par notification ou QR Code",
-            badge = "Recommandé • 0% Frais",
+            subtitle = "Ouverture directe dans l'application Wave ou validation par code instantanée (0% Frais)",
+            badge = if (isWaveInstalled) "📱 App Détectée • 0%" else "Recommandé • 0% Frais",
             badgeColor = WaveBlueColor,
             iconColor = WaveBlueColor,
+            isAppInstalled = isWaveInstalled,
             isSelected = selectedMethod == PaymentMethod.WAVE,
             onSelect = { onMethodSelected(PaymentMethod.WAVE) }
         )
@@ -78,10 +93,11 @@ fun PaymentMethodSelector(
         PaymentMethodOption(
             method = PaymentMethod.ORANGE_MONEY,
             title = "Orange Money",
-            subtitle = "Paiement direct sécurisé • Validation code secret / USSD #144#",
-            badge = "Instantané",
+            subtitle = "Ouverture directe dans l'app Orange Money ou validation par code #144#391#",
+            badge = if (isOmInstalled) "📱 App Détectée" else "Direct / USSD",
             badgeColor = OrangeMoneyColor,
             iconColor = OrangeMoneyColor,
+            isAppInstalled = isOmInstalled,
             isSelected = selectedMethod == PaymentMethod.ORANGE_MONEY,
             onSelect = { onMethodSelected(PaymentMethod.ORANGE_MONEY) }
         )
@@ -89,10 +105,11 @@ fun PaymentMethodSelector(
         PaymentMethodOption(
             method = PaymentMethod.MTN_MOMO,
             title = "MTN MoMo",
-            subtitle = "Paiement mobile sécurisé par code OTP",
-            badge = "Sécurisé",
+            subtitle = "Ouverture directe dans l'app MoMo ou validation par code secret OTP",
+            badge = if (isMomoInstalled) "📱 App Détectée" else "Sécurisé OTP",
             badgeColor = Color(0xFFF57F17),
             iconColor = MtnMomoYellow,
+            isAppInstalled = isMomoInstalled,
             isSelected = selectedMethod == PaymentMethod.MTN_MOMO,
             onSelect = { onMethodSelected(PaymentMethod.MTN_MOMO) }
         )
@@ -104,6 +121,7 @@ fun PaymentMethodSelector(
             badge = "Banques",
             badgeColor = VisaBlueColor,
             iconColor = VisaBlueColor,
+            isAppInstalled = false,
             isSelected = selectedMethod == PaymentMethod.CREDIT_CARD,
             onSelect = { onMethodSelected(PaymentMethod.CREDIT_CARD) }
         )
@@ -115,6 +133,7 @@ fun PaymentMethodSelector(
             badge = "100% Fiable",
             badgeColor = EscrowGreenColor,
             iconColor = EscrowGreenColor,
+            isAppInstalled = false,
             isSelected = selectedMethod == PaymentMethod.ESCROW_WALLET,
             onSelect = { onMethodSelected(PaymentMethod.ESCROW_WALLET) }
         )
@@ -129,6 +148,7 @@ private fun PaymentMethodOption(
     badge: String,
     badgeColor: Color,
     iconColor: Color,
+    isAppInstalled: Boolean = false,
     isSelected: Boolean,
     onSelect: () -> Unit
 ) {

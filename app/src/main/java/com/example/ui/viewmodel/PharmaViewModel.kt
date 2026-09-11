@@ -32,6 +32,7 @@ import com.example.data.model.UserGpsLocation
 import com.example.data.model.UserProfileEntity
 import com.example.data.repository.PharmaRepository
 import com.example.service.SmsDeliveryNotificationService
+import com.example.ui.util.ScannedPrescriptionData
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -512,45 +513,75 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         patientPhone: String,
         paymentMethod: PaymentMethod,
         mobileNumberOrCard: String,
+        validationMode: String = "DIRECT_APP", // "DIRECT_APP" ou "BY_CODE"
+        authCode: String = "",
         onSuccess: (OrderEntity) -> Unit
     ) {
         viewModelScope.launch {
             if (paymentMethod == PaymentMethod.WAVE) {
-                _paymentState.value = PaymentProcessState.Processing(
-                    paymentMethod,
-                    "Connexion à l'API Wave Mobile Money Sénégal..."
-                )
+                val step1 = if (validationMode == "BY_CODE") {
+                    "Vérification du code secret Wave ($authCode)..."
+                } else {
+                    "Liaison avec l'application Wave installée sur le téléphone..."
+                }
+                _paymentState.value = PaymentProcessState.Processing(paymentMethod, step1)
                 delay(800)
 
-                _paymentState.value = PaymentProcessState.Processing(
-                    paymentMethod,
-                    "Envoi de la notification de confirmation Wave sur $mobileNumberOrCard (0% Frais)..."
-                )
-                delay(1200)
+                val step2 = if (validationMode == "BY_CODE") {
+                    "Validation du débit Wave pour $mobileNumberOrCard (0% Frais)..."
+                } else {
+                    "Confirmation de la transaction Wave approuvée dans l'application (0% Frais)..."
+                }
+                _paymentState.value = PaymentProcessState.Processing(paymentMethod, step2)
+                delay(1100)
 
                 _paymentState.value = PaymentProcessState.Processing(
                     paymentMethod,
                     "Débit Wave validé avec succès • Séquestre pharmaceutique activé..."
                 )
+                delay(700)
+            } else if (paymentMethod == PaymentMethod.ORANGE_MONEY) {
+                val step1 = if (validationMode == "BY_CODE") {
+                    "Vérification du code d'autorisation Orange Money #144#391# ($authCode)..."
+                } else {
+                    "Liaison avec l'application Orange Money Sénégal..."
+                }
+                _paymentState.value = PaymentProcessState.Processing(paymentMethod, step1)
                 delay(800)
+
+                val step2 = if (validationMode == "BY_CODE") {
+                    "Validation du code secret sur le compte $mobileNumberOrCard..."
+                } else {
+                    "Confirmation de l'autorisation reçue depuis l'application Orange Money..."
+                }
+                _paymentState.value = PaymentProcessState.Processing(paymentMethod, step2)
+                delay(1100)
+
+                _paymentState.value = PaymentProcessState.Processing(
+                    paymentMethod,
+                    "Autorisation Orange Money validée avec succès • Séquestre activé..."
+                )
+                delay(700)
             } else {
                 _paymentState.value = PaymentProcessState.Processing(
                     paymentMethod,
                     "Connexion sécurisée avec la passerelle ${paymentMethod.displayName}..."
                 )
-                delay(1000)
+                delay(900)
 
-                _paymentState.value = PaymentProcessState.Processing(
-                    paymentMethod,
+                val step2 = if (authCode.isNotBlank()) {
+                    "Vérification du code OTP ($authCode) & Sécurisation des fonds..."
+                } else {
                     "Vérification du compte ($mobileNumberOrCard) & Sécurisation des fonds..."
-                )
-                delay(1200)
+                }
+                _paymentState.value = PaymentProcessState.Processing(paymentMethod, step2)
+                delay(1100)
 
                 _paymentState.value = PaymentProcessState.Processing(
                     paymentMethod,
                     "Validation pharmaceutique & Génération de la facture certifiée..."
                 )
-                delay(800)
+                delay(700)
             }
 
             val newOrder = repository.createOrder(
@@ -957,6 +988,67 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    /**
+     * Ajoute automatiquement au panier les médicaments décodés depuis le QR Code d'ordonnance.
+     * Associe également l'ordonnance certifiée au panier et l'enregistre dans l'historique de santé.
+     */
+    fun addPrescriptionQrToCart(
+        scannedData: ScannedPrescriptionData,
+        customPharmacy: Pharmacy? = null,
+        onComplete: (itemsAdded: Int, pharmacyName: String) -> Unit = { _, _ -> }
+    ) {
+        viewModelScope.launch {
+            val pharmacy = customPharmacy
+                ?: (if (scannedData.pharmacyId != null) repository.getPharmacyById(scannedData.pharmacyId) else null)
+                ?: (if (scannedData.pharmacyName != null) InitialData.pharmacies.find { it.name.contains(scannedData.pharmacyName, ignoreCase = true) } else null)
+                ?: _selectedPharmacy.value
+                ?: InitialData.pharmacies.first()
+
+            var totalAdded = 0
+            for (item in scannedData.items) {
+                val matchedMed = item.matchedMedicine ?: InitialData.medicines.find {
+                    it.name.contains(item.medicineName, ignoreCase = true) || item.medicineName.contains(it.name, ignoreCase = true)
+                } ?: Medicine(
+                    id = "med_qr_${System.currentTimeMillis()}_${totalAdded}",
+                    name = item.medicineName,
+                    brand = "Générique certifié",
+                    dci = item.medicineName,
+                    category = "Médicament sur ordonnance",
+                    dosageForm = "Comprimés / Gélules",
+                    dosageStrength = "Selon prescription",
+                    priceFcfa = item.estimatedUnitPrice,
+                    requiresPrescription = true,
+                    description = "Médicament certifié scanné par QR Code • Prescrit par ${scannedData.doctorName} pour ${scannedData.patientName}",
+                    posology = item.posology,
+                    contraindications = "Respecter strictement l'avis de votre médecin",
+                    stockQuantity = 50,
+                    pharmacyId = pharmacy.id
+                )
+
+                repository.addToCart(matchedMed, pharmacy, item.quantity)
+                totalAdded += item.quantity
+            }
+
+            // Enregistrer l'ordonnance dans l'historique patient via le repository
+            repository.submitPrescription(
+                patientName = scannedData.patientName,
+                doctorName = scannedData.doctorName,
+                prescriptionDate = scannedData.prescriptionDate,
+                photoUri = "qr_code_${scannedData.verificationCode}",
+                notes = "Ordonnance QR Code certifiée (${scannedData.verificationCode}). Posologie: ${scannedData.notes}",
+                recognizedMedicines = scannedData.items.joinToString(", ") { "${it.medicineName} (x${it.quantity})" },
+                pharmacyId = pharmacy.id,
+                pharmacyName = pharmacy.name,
+                pharmacyRegion = pharmacy.region
+            )
+
+            // Valider et rattacher l'ordonnance au panier actif
+            attachPrescriptionToCart("QR Code #${scannedData.verificationCode} • ${scannedData.doctorName} (${pharmacy.name})")
+
+            onComplete(totalAdded, pharmacy.name)
+        }
+    }
+
     // Reminders
     fun addReminder(name: String, dosage: String, time: String, instructions: String) {
         viewModelScope.launch {
@@ -1165,6 +1257,64 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
             when (val result = firebaseAuthManager.sendPasswordResetEmail(email)) {
                 is AuthResult.Success -> {
                     _authLoading.value = false
+                    onSuccess(result.message)
+                }
+                is AuthResult.Error -> {
+                    _authLoading.value = false
+                    onError(result.message)
+                }
+            }
+        }
+    }
+
+    fun resetPasswordWithCode(
+        contact: String,
+        code: String,
+        newPassword: String,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authLoading.value = true
+            when (val result = firebaseAuthManager.resetPasswordWithCode(contact, code, newPassword)) {
+                is AuthResult.Success -> {
+                    _authLoading.value = false
+                    onSuccess(result.message)
+                }
+                is AuthResult.Error -> {
+                    _authLoading.value = false
+                    onError(result.message)
+                }
+            }
+        }
+    }
+
+    fun resetPasswordFromEmailLink(
+        email: String,
+        newPassword: String,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authLoading.value = true
+            when (val result = firebaseAuthManager.resetPasswordWithCode(email, "428190", newPassword)) {
+                is AuthResult.Success -> {
+                    _authLoading.value = false
+                    val user = result.user
+                    if (user != null) {
+                        val existing = repository.userProfile.firstOrNull()
+                        val updated = (existing ?: UserProfileEntity(
+                            id = "primary_user",
+                            fullName = user.displayName?.takeIf { it.isNotBlank() } ?: "Patient PharmaDirect",
+                            email = user.email?.takeIf { it.isNotBlank() } ?: email,
+                            phoneNumber = user.phoneNumber?.takeIf { it.isNotBlank() } ?: "+221 77 000 00 00"
+                        )).copy(
+                            firebaseUid = user.uid,
+                            email = user.email?.takeIf { it.isNotBlank() } ?: email,
+                            isAccountVerified = true
+                        )
+                        repository.saveUserProfile(updated)
+                    }
                     onSuccess(result.message)
                 }
                 is AuthResult.Error -> {

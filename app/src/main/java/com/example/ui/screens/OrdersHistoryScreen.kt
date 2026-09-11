@@ -107,6 +107,7 @@ import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
 import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
 import com.example.ui.theme.TextOnWhiteMuted
 import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
@@ -175,6 +176,9 @@ fun OrdersHistoryScreen(
     orderToCancel?.let { order ->
         AlertDialog(
             onDismissRequest = { orderToCancel = null },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Cancel, contentDescription = null, tint = Color(0xFFD32F2F), modifier = Modifier.size(24.dp))
@@ -182,7 +186,8 @@ fun OrdersHistoryScreen(
                     Text(
                         text = "Annuler la commande ${order.orderNumber} ?",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        color = TextOnWhitePrimary
                     )
                 }
             },
@@ -191,7 +196,7 @@ fun OrdersHistoryScreen(
                     Text(
                         text = "Êtes-vous sûr de vouloir annuler cette commande passée auprès de ${order.pharmacyName} ?",
                         fontSize = 13.sp,
-                        color = TextPrimaryDark
+                        color = TextOnWhiteSecondary
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Box(
@@ -204,7 +209,7 @@ fun OrdersHistoryScreen(
                         Text(
                             text = "Remboursement intégral de ${order.totalFcfa} FCFA déclenché instantanément sur votre compte ${order.paymentMethod} (0% frais d'annulation).",
                             fontSize = 12.sp,
-                            color = Color(0xFF2E7D32),
+                            color = Color(0xFF1B5E20),
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -228,7 +233,7 @@ fun OrdersHistoryScreen(
             },
             dismissButton = {
                 TextButton(onClick = { orderToCancel = null }) {
-                    Text("Conserver la commande", color = MedicalTealPrimary, fontSize = 12.sp)
+                    Text("Conserver la commande", color = MedicalTealDark, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                 }
             }
         )
@@ -238,6 +243,9 @@ fun OrdersHistoryScreen(
     orderToDelete?.let { order ->
         AlertDialog(
             onDismissRequest = { orderToDelete = null },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = Color(0xFFD32F2F), modifier = Modifier.size(24.dp))
@@ -245,16 +253,27 @@ fun OrdersHistoryScreen(
                     Text(
                         text = "Supprimer de l'historique ?",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        color = TextOnWhitePrimary
                     )
                 }
             },
             text = {
-                Text(
-                    text = "Cette action supprimera définitivement la commande ${order.orderNumber} de votre historique local.",
-                    fontSize = 13.sp,
-                    color = TextSecondaryMuted
-                )
+                Column {
+                    Text(
+                        text = "Cette action supprimera définitivement la facture et la commande ${order.orderNumber} de votre historique local.",
+                        fontSize = 13.sp,
+                        color = TextOnWhiteSecondary,
+                        lineHeight = 18.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Note légale : L'officine émettrice conserve l'archivage fiscal officiel de cette facture.",
+                        fontSize = 12.sp,
+                        color = TextOnWhiteMuted,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             },
             confirmButton = {
                 Button(
@@ -262,7 +281,7 @@ fun OrdersHistoryScreen(
                         viewModel.deleteOrder(order.id)
                         orderToDelete = null
                         scope.launch {
-                            snackbarHostState.showSnackbar("Commande supprimée de l'historique.")
+                            snackbarHostState.showSnackbar("Facture et commande supprimées de l'historique.")
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
@@ -274,7 +293,7 @@ fun OrdersHistoryScreen(
             },
             dismissButton = {
                 TextButton(onClick = { orderToDelete = null }) {
-                    Text("Annuler", color = TextSecondaryMuted)
+                    Text("Annuler", color = Color(0xFF475569), fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -520,7 +539,9 @@ fun OrdersHistoryScreen(
                             focusedBorderColor = MedicalTealPrimary,
                             unfocusedBorderColor = Color(0xFFE0E0E0),
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            focusedTextColor = TextOnWhitePrimary,
+                            unfocusedTextColor = TextOnWhitePrimary
                         )
                     )
 
@@ -821,6 +842,7 @@ private fun EnhancedOrderHistoryCard(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color(0xFFF9FBFA))
+                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -836,12 +858,12 @@ private fun EnhancedOrderHistoryCard(
                         text = order.pharmacyName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
-                        color = TextPrimaryDark
+                        color = TextOnWhitePrimary
                     )
                     Text(
                         text = order.pharmacyAddress,
                         fontSize = 10.sp,
-                        color = TextSecondaryMuted,
+                        color = TextOnWhiteSecondary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -1256,15 +1278,16 @@ private fun OrderFullDetailDialog(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FBFA))
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FBFA)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.LocalPharmacy, contentDescription = null, tint = MedicalTealPrimary, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(order.pharmacyName, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextPrimaryDark)
+                            Text(order.pharmacyName, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextOnWhitePrimary)
                         }
-                        Text(order.pharmacyAddress, fontSize = 11.sp, color = TextSecondaryMuted, modifier = Modifier.padding(start = 22.dp))
+                        Text(order.pharmacyAddress, fontSize = 11.sp, color = TextOnWhiteSecondary, modifier = Modifier.padding(start = 22.dp))
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(modifier = Modifier.padding(start = 22.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Verified, contentDescription = null, tint = VerifiedBadgeGreen, modifier = Modifier.size(12.dp))

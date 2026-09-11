@@ -97,6 +97,9 @@ import com.example.ui.theme.SafeBlueLight
 import com.example.ui.theme.SafeBlueSecondary
 import com.example.ui.theme.TextPrimaryDark
 import com.example.ui.theme.TextSecondaryMuted
+import com.example.ui.theme.TextOnWhitePrimary
+import com.example.ui.theme.TextOnWhiteSecondary
+import com.example.ui.theme.TextOnWhiteMuted
 import com.example.ui.theme.VerifiedBadgeBg
 import com.example.ui.theme.VerifiedBadgeGreen
 
@@ -1046,11 +1049,14 @@ fun AuthDialog(
 
         AlertDialog(
             onDismissRequest = { showResetPasswordDialog = false },
+            containerColor = Color.White,
+            titleContentColor = TextOnWhitePrimary,
+            textContentColor = TextOnWhiteSecondary,
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(imageVector = Icons.Default.LockReset, contentDescription = null, tint = MedicalTealPrimary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Réinitialiser mon mot de passe", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Réinitialiser mon mot de passe", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextOnWhitePrimary)
                 }
             },
             text = {
@@ -1058,7 +1064,7 @@ fun AuthDialog(
                     Text(
                         text = "Saisissez votre adresse email. Nous vous transmettrons un lien de réinitialisation sécurisé Firebase Auth.",
                         fontSize = 13.sp,
-                        color = TextSecondaryMuted
+                        color = TextOnWhiteSecondary
                     )
 
                     OutlinedTextField(
@@ -1067,10 +1073,16 @@ fun AuthDialog(
                             resetEmail = it
                             resetError = null
                         },
-                        label = { Text("Email associé") },
+                        label = { Text("Email associé", color = TextOnWhiteSecondary) },
                         placeholder = { Text("votre.email@domaine.com") },
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MedicalTealPrimary) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextOnWhitePrimary,
+                            unfocusedTextColor = TextOnWhitePrimary,
+                            focusedBorderColor = MedicalTealPrimary,
+                            unfocusedBorderColor = Color(0xFFCBD5E1)
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
                         singleLine = true
@@ -1108,7 +1120,7 @@ fun AuthDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showResetPasswordDialog = false }) {
-                    Text("Fermer")
+                    Text("Fermer", color = Color(0xFF475569), fontWeight = FontWeight.SemiBold)
                 }
             }
         )

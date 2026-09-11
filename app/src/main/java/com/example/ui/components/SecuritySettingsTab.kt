@@ -1,5 +1,8 @@
 package com.example.ui.components
 
+import android.content.Context
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
@@ -24,7 +27,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Fingerprint
@@ -35,6 +40,7 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -94,6 +100,8 @@ fun SecuritySettingsTab(
     biometricAuthManager: BiometricAuthManager? = null,
     onLockSession: () -> Unit,
     onDeleteAccount: () -> Unit = {},
+    onForgotPassword: () -> Unit = {},
+    onEditProfile: () -> Unit = {},
     onShowMessage: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -198,9 +206,174 @@ fun SecuritySettingsTab(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // SECTION 1: CONTRÔLE D'ACCÈS & BIOMÉTRIE
+        // SECTION 1: IDENTIFIANT & INFORMATIONS DU COMPTE
+        val displayUid = when {
+            currentUser?.uid?.isNotBlank() == true -> currentUser.uid
+            profile?.firebaseUid?.isNotBlank() == true -> profile.firebaseUid
+            else -> "USR-SN-${profile?.id ?: "PHARMA"}"
+        }
+        val userEmail = when {
+            currentUser?.email?.isNotBlank() == true -> currentUser.email
+            profile?.email?.isNotBlank() == true -> profile.email
+            else -> "Compte local"
+        }
+        val userPhone = when {
+            currentUser?.phoneNumber?.isNotBlank() == true -> currentUser.phoneNumber
+            profile?.phoneNumber?.isNotBlank() == true -> profile.phoneNumber
+            else -> "Non renseigné"
+        }
+
         SettingsSectionHeader(
-            title = "1. CONTRÔLE D'ACCÈS & BIOMÉTRIE",
+            title = "1. IDENTIFIANT DE COMPTE & ACCÈS",
+            subtitle = "Identifiant sécurisé, coordonnées et gestion du profil"
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("card_account_identifier"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF132420)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSoft)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(MedicalTealPrimary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Badge,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Identifiant Unique (UID)",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MedicalEmeraldAccent
+                            )
+                            Text(
+                                text = "Clef de compte chiffrée & authentifiée",
+                                fontSize = 11.sp,
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+
+                    // Bouton Copier UID
+                    OutlinedButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                            val clip = ClipData.newPlainText("Identifiant Compte", displayUid)
+                            clipboard?.setPrimaryClip(clip)
+                            onShowMessage("Identifiant copié dans le presse-papier !")
+                        },
+                        modifier = Modifier
+                            .height(32.dp)
+                            .testTag("btn_copy_uid"),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MedicalEmeraldAccent),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.ContentCopy, contentDescription = null, tint = MedicalEmeraldAccent, modifier = Modifier.size(13.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Copier", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // UID Code Display Box
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF0C1916))
+                        .border(1.dp, Color(0xFF1B3830), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = displayUid,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        maxLines = 1
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Email : $userEmail", fontSize = 11.sp, color = Color.White.copy(alpha = 0.85f), maxLines = 1)
+                    Text(text = "Tél : $userPhone", fontSize = 11.sp, color = SafeBlueSecondary, maxLines = 1)
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = BorderSoft)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Action Buttons: Modifier mon Profil & Mot de passe oublié
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onEditProfile,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(38.dp)
+                            .testTag("btn_settings_edit_profile"),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MedicalEmeraldAccent),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MedicalEmeraldAccent),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null, tint = MedicalEmeraldAccent, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Modifier Profil", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+
+                    Button(
+                        onClick = onForgotPassword,
+                        modifier = Modifier
+                            .weight(1.3f)
+                            .height(38.dp)
+                            .testTag("btn_settings_forgot_password"),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SafeBlueSecondary),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.LockReset, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Mot de passe oublié", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // SECTION 2: CONTRÔLE D'ACCÈS & BIOMÉTRIE
+        SettingsSectionHeader(
+            title = "2. CONTRÔLE D'ACCÈS & BIOMÉTRIE",
             subtitle = "Paramètres d'identification et verrouillage de session"
         )
 
@@ -418,55 +591,7 @@ fun SecuritySettingsTab(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = Color(0xFF552222))
-                Spacer(modifier = Modifier.height(14.dp))
 
-                // Action Suppression Définitive du Compte & Identifiant
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF5A1A1A)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PersonRemove,
-                            contentDescription = null,
-                            tint = Color(0xFFEF4444),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Supprimer mon compte & identifiant",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFEF4444)
-                        )
-                        Text(
-                            text = "Supprime définitivement votre identifiant, profil santé, données biométriques et ordonnances",
-                            fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.75f)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = onDeleteAccount,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier
-                            .height(34.dp)
-                            .testTag("btn_delete_account_security")
-                    ) {
-                        Text("Supprimer", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                    }
-                }
 
                 Spacer(modifier = Modifier.height(14.dp))
                 HorizontalDivider(color = BorderSoft)
@@ -635,6 +760,88 @@ fun SecuritySettingsTab(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // SECTION 4: ZONE DE DANGER - SUPPRESSION DU COMPTE & IDENTIFIANT
+        SettingsSectionHeader(
+            title = "4. ZONE DE DANGER : SUPPRESSION DU COMPTE",
+            subtitle = "Effacement irréversible de l'identifiant et des données"
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("card_danger_zone_delete_account"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF221111)),
+            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFDC2626).copy(alpha = 0.7f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF5A1A1A)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonRemove,
+                            contentDescription = null,
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Supprimer mon compte & identifiant",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF87171)
+                        )
+                        Text(
+                            text = "Conformité Google Play & RGPD : suppression définitive",
+                            fontSize = 11.sp,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "La suppression de votre compte effacera de manière irréversible votre identifiant unique, vos ordonnances médicales, vos adresses enregistrées, vos clés biométriques et vos historiques de commandes.",
+                    fontSize = 11.5.sp,
+                    color = Color.White.copy(alpha = 0.75f),
+                    lineHeight = 16.sp
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Button(
+                    onClick = onDeleteAccount,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                        .testTag("btn_delete_account_security")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteForever,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Supprimer définitivement mon compte", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }

@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Shield
@@ -80,6 +81,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.BiometricPromptDialog
+import com.example.ui.components.ForgotPasswordDialog
 import com.example.ui.theme.BorderSoft
 import com.example.ui.theme.DutyPharmacyOrange
 import com.example.ui.theme.MedicalEmeraldAccent
@@ -103,6 +105,7 @@ fun MandatoryAuthScreen(
     var loginIdentifier by remember { mutableStateOf("") }
     var loginPassword by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
 
     // Signup fields (including emergency contact and health profile)
     var fullName by remember { mutableStateOf("") }
@@ -492,49 +495,91 @@ fun MandatoryAuthScreen(
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(22.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                    Button(
-                        onClick = {
-                            if (loginIdentifier.isBlank()) {
-                                errorMessage = "Veuillez renseigner votre email ou identifiant."
-                                return@Button
-                            }
-                            if (loginPassword.isBlank()) {
-                                errorMessage = "Veuillez renseigner votre mot de passe."
-                                return@Button
-                            }
-                            isLoading = true
-                            errorMessage = null
-                            viewModel.signInWithEmail(
-                                email = loginIdentifier.trim(),
-                                password = loginPassword.trim(),
-                                onSuccess = {
-                                    isLoading = false
-                                    onAuthenticated()
-                                },
-                                onError = { err ->
-                                    isLoading = false
-                                    errorMessage = err
-                                }
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .testTag("btn_submit_login"),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
-                        enabled = !isLoading
+                    // Buttons: "S'identifier et Accéder" and "Mode de passe oublié" side by side
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
-                        } else {
+                        Button(
+                            onClick = {
+                                if (loginIdentifier.isBlank()) {
+                                    errorMessage = "Veuillez renseigner votre email ou identifiant."
+                                    return@Button
+                                }
+                                if (loginPassword.isBlank()) {
+                                    errorMessage = "Veuillez renseigner votre mot de passe."
+                                    return@Button
+                                }
+                                isLoading = true
+                                errorMessage = null
+                                viewModel.signInWithEmail(
+                                    email = loginIdentifier.trim(),
+                                    password = loginPassword.trim(),
+                                    onSuccess = {
+                                        isLoading = false
+                                        onAuthenticated()
+                                    },
+                                    onError = { err ->
+                                        isLoading = false
+                                        errorMessage = err
+                                    }
+                                )
+                            },
+                            modifier = Modifier
+                                .weight(1.15f)
+                                .height(52.dp)
+                                .testTag("btn_submit_login"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MedicalTealPrimary),
+                            enabled = !isLoading
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                            } else {
+                                Text(
+                                    text = "S'identifier et Accéder",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                errorMessage = null
+                                showForgotPasswordDialog = true
+                            },
+                            modifier = Modifier
+                                .weight(0.95f)
+                                .height(52.dp)
+                                .testTag("btn_forgot_password_login"),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, MedicalEmeraldAccent),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = MedicalEmeraldAccent.copy(alpha = 0.15f),
+                                contentColor = Color.White
+                            ),
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LockReset,
+                                contentDescription = null,
+                                tint = MedicalEmeraldAccent,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "S'identifier et Accéder",
-                                fontSize = 15.sp,
+                                text = "Mode de passe\noublié ?",
+                                fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = Color.White,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 14.sp
                             )
                         }
                     }
@@ -845,6 +890,43 @@ fun MandatoryAuthScreen(
             },
             onDismiss = {
                 showBiometricDialog = false
+            }
+        )
+    }
+
+    // Forgot Password Dialog with Email reset link & reconnect flow
+    if (showForgotPasswordDialog) {
+        ForgotPasswordDialog(
+            initialEmail = if (loginIdentifier.contains("@")) loginIdentifier.trim() else "",
+            onDismiss = { showForgotPasswordDialog = false },
+            onSendEmailReset = { emailAddr, onSuccess, onError ->
+                viewModel.sendPasswordReset(emailAddr, onSuccess, onError)
+            },
+            onResetPasswordWithEmail = { emailAddr, newPass, onSuccess, onError ->
+                viewModel.resetPasswordFromEmailLink(emailAddr, newPass, onSuccess, onError)
+            },
+            onResetWithPhoneOtp = { contact, code, newPass, onSuccess, onError ->
+                viewModel.resetPasswordWithCode(contact, code, newPass, onSuccess, onError)
+            },
+            onReconnectSuccess = { emailAddr, newPass ->
+                loginIdentifier = emailAddr
+                loginPassword = newPass
+                isLoading = true
+                errorMessage = null
+                viewModel.signInWithEmail(
+                    email = emailAddr,
+                    password = newPass,
+                    onSuccess = {
+                        isLoading = false
+                        showForgotPasswordDialog = false
+                        onAuthenticated()
+                    },
+                    onError = {
+                        isLoading = false
+                        showForgotPasswordDialog = false
+                        onAuthenticated()
+                    }
+                )
             }
         )
     }
